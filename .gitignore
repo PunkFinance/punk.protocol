@@ -1,0 +1,7 @@
+.env
+/migrations
+/test
+/node_modules
+/build
+package-lock.json
+/contracts/models/TestModel.sol
