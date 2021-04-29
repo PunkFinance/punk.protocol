@@ -1,4 +1,4 @@
-# PUNK.PROTOCOl
+# Punk.Protocol
 
 #### We’re designing financial weapon blueprint for Punkers. Hang in there!
 
