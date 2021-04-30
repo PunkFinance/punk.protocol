@@ -8,6 +8,7 @@ import "../interfaces/ModelInterface.sol";
 import "../Ownable.sol";
 import "../ModelStorage.sol";
 import "./interfaces/CTokenInterface.sol";
+import "./interfaces/IUniswapV2Router02.sol";
 
 contract CompoundModel is ModelInterface, ModelStorage, Ownable{
     using SafeERC20 for ERC20;
@@ -50,7 +51,8 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
     }
 
     function withdrawAllToForge() public OnlyForge override{
-        
+        claimComp( );
+        liquidateComp( );
     }
 
     function withdrawToForge( uint256 [] memory amounts ) public OnlyForge override{
@@ -60,5 +62,38 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
     function withdrawTo( uint256 [] memory amounts, address to ) public OnlyForge override{
         
     }
+
+    function claimComp() public {
+        CTokenInterface(_comptroller).claimComp(address(this));
+    }
+
+    function earnCompound() public OnlyAdminOrGovernance{
+        claimComp( );
+        liquidateComp( );
+        invest();
+    }
+
+    function liquidateComp() internal {
+        uint oldBalance = IERC20(token(0)).balanceOf(address(this));
+        uint balance = IERC20(_comp).balanceOf(address(this));
+        if (balance > 0) {
+
+            uint256 amountOutMin = 1;
+            IERC20(_comp).approve(address(_uRouterV2), balance);
+            address[] memory path = new address[](3);
+            path[0] = address(_comp);
+            path[1] = IUniswapV2Router02(_uRouterV2).WETH();
+            path[2] = address(token(0));
+            IUniswapV2Router02(_uRouterV2).swapExactTokensForTokens(
+                balance,
+                amountOutMin,
+                path,
+                address(this),
+                block.timestamp
+            );
+        }
+        uint newBalance = IERC20(token(0)).balanceOf(address(this));
+    }
+
 
 }

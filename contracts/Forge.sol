@@ -99,7 +99,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
                     _blockTimestamp() 
                 )
             );
-        _transactions[ _msgSender() ][ index ].push( Transaction( true, _blockTimestamp().sub( 24 * 60 * 60 * 2 ), amount ) );
+        _transactions[ _msgSender() ][ index ].push( Transaction( true, _blockTimestamp(), amount ) );
         _count++;
         
         _updateScore( _msgSender(), index );
@@ -137,17 +137,17 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         
         require( ableAmount >= amount, "FORGE : entered an amount higher than the amount you can withdraw." );
 
-        uint bonus              = balanceOf( address( this ) )
-                                    .mul( saver( _msgSender(), index ).score )
-                                    .mul( amount )
-                                    .div( saver( _msgSender(), index ).mint )
-                                    .div( totalScore() );
+        uint bonus                      = balanceOf( address( this ) )
+                                            .mul( saver( _msgSender(), index ).score )
+                                            .mul( amount )
+                                            .div( saver( _msgSender(), index ).mint )
+                                            .div( totalScore() );
 
-        uint underlyingAmount   = ( amount + bonus )
-                                    .mul( _getInvestBalance() )
-                                    .div( totalSupply( ) );
+        uint underlyingAmount           = ( amount + bonus )
+                                            .mul( _getInvestBalance() )
+                                            .div( totalSupply( ) );
 
-        uint buyBackAmount      = underlyingAmount.mul( _variables.buybackRate() ).div( 100 );
+        uint buyBackAmount              = underlyingAmount.mul( _variables.buybackRate() ).div( 100 );
         
         uint [] memory amounts          = new uint [] ( 1 ); amounts[0] = underlyingAmount.sub( buyBackAmount );
         uint [] memory buyBackAmounts   = new uint [] ( 1 ); amounts[0] = buyBackAmount;
@@ -156,7 +156,9 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         _burn( address( this ), bonus );
         ModelInterface( modelAddress() ).withdrawTo( amounts, _msgSender() );
         ModelInterface( modelAddress() ).withdrawTo( buyBackAmounts, _treasury );
+        
         _savers[ _msgSender() ][index].released += amount;
+        _transactions[ _msgSender() ][index].push( Transaction( false, _blockTimestamp(), amount ) );
 
         if( saver( _msgSender(), index ).status == 0 ) { _updateStatus( _msgSender(), index, 1 ); }
         if( saver( _msgSender(), index ).count == count && saver( _msgSender(), index ).mint == saver( _msgSender(), index ).released && _blockTimestamp() > endTimestamp ) {
@@ -183,6 +185,8 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         ModelInterface( modelAddress() ).withdrawTo( amounts, _msgSender() );
         
         _totalScore = _totalScore.sub( saver( _msgSender(), index ).score );
+        _transactions[ _msgSender() ][index].push( Transaction( false, _blockTimestamp(), underlyingAmount ) );
+        
         _updateSaver( _msgSender(), index );
         return true;
     }

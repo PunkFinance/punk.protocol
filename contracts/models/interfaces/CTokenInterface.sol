@@ -17,4 +17,6 @@ interface CTokenInterface {
     function balanceOf(address _owner) external view returns (uint256);
 
     function underlying() external view returns (address);
+
+    function claimComp(address holder) external;
 }
