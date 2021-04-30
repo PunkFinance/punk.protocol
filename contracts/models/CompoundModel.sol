@@ -39,54 +39,58 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
     }
 
     function underlyingBalanceInModel() public override view returns ( uint256 [] memory ){
-        
+        // Hard Work Now! For Punkers by 0xViktor
     }
 
     function underlyingBalanceWithInvestment() public override view returns ( uint256 [] memory ){
-        
+        // Hard Work Now! For Punkers by 0xViktor
     }
 
     function invest() public override {
-        
+        // Hard Work Now! For Punkers by 0xViktor
     }
 
     function withdrawAllToForge() public OnlyForge override{
+        // Hard Work Now! For Punkers by 0xViktor
         claimComp( );
         liquidateComp( );
     }
 
     function withdrawToForge( uint256 [] memory amounts ) public OnlyForge override{
-        
+        // Hard Work Now! For Punkers by 0xViktor
     }
 
     function withdrawTo( uint256 [] memory amounts, address to ) public OnlyForge override{
-        
+        // Hard Work Now! For Punkers by 0xViktor
     }
 
     function claimComp() public {
+        // Hard Work Now! For Punkers by 0xViktor
         CTokenInterface(_comptroller).claimComp(address(this));
     }
 
     function earnCompound() public OnlyAdminOrGovernance{
-        claimComp( );
+        // Hard Work Now! For Punkers by 0xViktor
+        claimComp();
         liquidateComp( );
         invest();
     }
 
     function liquidateComp() internal {
+        // Hard Work Now! For Punkers by 0xViktor
         uint oldBalance = IERC20(token(0)).balanceOf(address(this));
         uint balance = IERC20(_comp).balanceOf(address(this));
         if (balance > 0) {
 
-            uint256 amountOutMin = 1;
             IERC20(_comp).approve(address(_uRouterV2), balance);
-            address[] memory path = new address[](3);
+            
+            address[] memory path = new address[](2);
             path[0] = address(_comp);
-            path[1] = IUniswapV2Router02(_uRouterV2).WETH();
-            path[2] = address(token(0));
+            path[1] = address(token(0));
+
             IUniswapV2Router02(_uRouterV2).swapExactTokensForTokens(
                 balance,
-                amountOutMin,
+                1,
                 path,
                 address(this),
                 block.timestamp

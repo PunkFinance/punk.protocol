@@ -65,13 +65,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         }
     }
     
-    function countByAccount( address account ) public view override returns ( uint ){
-        return _savers[account].length;
-    }
-    
-    function exchangeRate() public view override returns( uint ){
-        return ( totalSupply() == 0 ? underlyingUnit() : totalSupply() ).div( _getInvestBalance( ) );
-    }
+    function countByAccount( address account ) public view override returns ( uint ){ return _savers[account].length; }
     
     function craftingSaver( uint amount, uint startTimestamp, uint count, uint interval ) public override returns( bool ){
         require( amount > 0 && count > 0 && interval > 0, "FORGE : amount, count, interval must be greater than zero.");
@@ -79,7 +73,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
 
         uint index = countByAccount( _msgSender() ) == 0 ? 0 : countByAccount( _msgSender() );
         
-        uint mint = amount.mul( totalSupply() == 0 ? underlyingUnit() : totalSupply( ) ).div( _getInvestBalance( ) );
+        uint mint = amount.mul( totalSupply() == 0 ? _underlyingUnit() : totalSupply() ).div(   getTotalVolume() );
         _mint( _msgSender(), mint );
 
         ERC20(_token ).safeTransferFrom( _msgSender(), address( this ), amount );
@@ -103,23 +97,26 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         _count++;
         
         _updateScore( _msgSender(), index );
+
+        uint [] memory deposits = new uint [] ( 1 ); deposits[0] = amount;
+        emit CraftingSaver( _msgSender(), index, deposits );
         return true;
     }
     
     function addDeposit( uint index, uint amount ) public override returns( bool ){
         require( saver( msg.sender, index ).startTimestamp < _blockTimestamp(), "FORGE : time for additional deposits has been exceeded." );
 
-        uint mint = amount.mul( totalSupply() == 0 ? underlyingUnit() : totalSupply() ).div( _getInvestBalance( ) );
+        uint mint = amount.mul( totalSupply() == 0 ? _underlyingUnit() : totalSupply() ).div(   getTotalVolume() );
         _mint( _msgSender(), mint );
         
         ERC20( _token ).safeTransferFrom( _msgSender(), address( this ), amount );
         ERC20( _token ).safeTransfer( _model, amount );
         ModelInterface( _model ).invest();
 
-        uint lastIndex = getTransactions(_msgSender(), index ).length.sub( 1 );
+        uint lastIndex = transactions(_msgSender(), index ).length.sub( 1 );
 
-        if( _blockTimestamp().sub( getTransactions(_msgSender(), index )[ lastIndex ].timestamp ) < SECONDS_DAY ){
-            getTransactions(_msgSender(), index )[ lastIndex ].amount += amount;
+        if( _blockTimestamp().sub( transactions(_msgSender(), index )[ lastIndex ].timestamp ) < SECONDS_DAY ){
+            transactions(_msgSender(), index )[ lastIndex ].amount += amount;
         }else{
             _transactions[_msgSender()][ index ].push( Transaction( true, _blockTimestamp(), amount ) );
         }
@@ -127,6 +124,9 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         _updateScore( _msgSender(), index );
         _addMint( _msgSender(), index, mint );
         _updateSaver( _msgSender(), index );
+
+        uint [] memory deposits = new uint [] ( 1 ); deposits[0] = amount;
+        emit AddDeposit( _msgSender(), index, deposits );
         return true;
     }
     
@@ -137,15 +137,15 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         
         require( ableAmount >= amount, "FORGE : entered an amount higher than the amount you can withdraw." );
 
-        uint bonus                      = balanceOf( address( this ) )
+        uint bonus                      = getBonus()
                                             .mul( saver( _msgSender(), index ).score )
                                             .mul( amount )
                                             .div( saver( _msgSender(), index ).mint )
                                             .div( totalScore() );
 
         uint underlyingAmount           = ( amount + bonus )
-                                            .mul( _getInvestBalance() )
-                                            .div( totalSupply( ) );
+                                            .mul(  getTotalVolume() )
+                                            .div( totalSupply() );
 
         uint buyBackAmount              = underlyingAmount.mul( _variables.buybackRate() ).div( 100 );
         
@@ -167,6 +167,8 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         }
         
         _updateSaver( _msgSender(), index );
+
+        emit Withdraw( _msgSender(), index, amounts );
         return true;
     }
     
@@ -177,7 +179,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
 
         uint terminateFee = calcTerminateFee( _msgSender(), index );
         uint returnAmount = saver( _msgSender(), index ).mint.sub( terminateFee );
-        uint underlyingAmount = returnAmount.mul( _getInvestBalance() ).div( totalSupply( ) );
+        uint underlyingAmount = returnAmount.mul(  getTotalVolume() ).div( totalSupply() );
         uint [] memory amounts = new uint [] ( 1 ); amounts[0] = underlyingAmount;
 
         _burn( _msgSender(), saver( _msgSender(), index ).mint );
@@ -188,42 +190,44 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         _transactions[ _msgSender() ][index].push( Transaction( false, _blockTimestamp(), underlyingAmount ) );
         
         _updateSaver( _msgSender(), index );
+
+        emit Terminate( _msgSender(), index, amounts );
         return true;
     }
 
-    function _getInvestBalance( ) internal view returns ( uint ){
-        return ModelInterface(_model ).underlyingBalanceWithInvestment()[0] == 0 ? underlyingUnit() : ModelInterface(_model ).underlyingBalanceWithInvestment()[0];
-    }
-    
     function modelAddress() public view override returns ( address ){ return _model; }
 
-    
     function countAll() public view override returns( uint ){ return _count; }
-
     
     function totalScore() public view override returns( uint ){ return _totalScore; }
-
     
     function saver( address account, uint index ) public view override returns( Saver memory ){ return _savers[account][index]; }
 
-    function _terminateFee() internal view returns ( uint ){
-        return _variables.earlyTerminateFee();
+    function transactions( address account, uint index ) public view override returns ( Transaction [] memory ){ return _transactions[account][index]; }
+
+    function exchangeRate() public view override returns( uint ){
+        return ( totalSupply() == 0 ? _underlyingUnit() : totalSupply() ).div(   getTotalVolume() );
     }
- 
-    function getBonus( ) public view returns( uint ){
+
+    function getBonus() public view override returns( uint ){
         return balanceOf( address( this ) );
     }
 
-    function getBonusUnderlying( ) public view returns( uint ){
-        return totalSupply( ) == 0 ? 0 : balanceOf( address( this ) ).mul( _getInvestBalance() ).div( totalSupply( ) );
+    function getBonusUnderlying() public view override returns( uint ){
+        return totalSupply() == 0 ? 0 : balanceOf( address( this ) ).mul(  getTotalVolume() ).div( totalSupply() );
     }
-    
-    function underlyingUnit( ) public view returns( uint256 ) {
+
+    function  getTotalVolume() public view override returns( uint ){
+        return ModelInterface(_model ).underlyingBalanceWithInvestment()[0] == 0 ? _underlyingUnit() : ModelInterface(_model ).underlyingBalanceWithInvestment()[0];
+    }
+
+    // Internal
+    function _underlyingUnit() internal view returns( uint256 ) {
         return _tokenUnit;
     }
     
-    function getTransactions( address account, uint index ) public view returns ( Transaction [] memory ){
-        return _transactions[account][index];
+    function _terminateFee() internal view returns ( uint ){
+        return _variables.earlyTerminateFee();
     }
     
     function _addMint( address account, uint index, uint mint ) internal {
