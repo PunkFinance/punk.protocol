@@ -14,7 +14,7 @@ import "./libs/Math.sol";
 import "./libs/Score.sol";
 
 contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
-    using SafeMath for uint256;
+    using SafeMath for uint;
     using SafeERC20 for ERC20;
 
     uint constant SECONDS_DAY = 60*60*24;
@@ -222,7 +222,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
     }
 
     // Internal
-    function _underlyingUnit() internal view returns( uint256 ) {
+    function _underlyingUnit() internal view returns( uint ) {
         return _tokenUnit;
     }
     

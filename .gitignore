@@ -5,3 +5,4 @@
 /build
 package-lock.json
 /contracts/models/TestModel.sol
+/contracts/PunkRewardPool.sol
