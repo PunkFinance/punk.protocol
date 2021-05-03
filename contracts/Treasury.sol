@@ -4,7 +4,7 @@ pragma solidity >=0.5.0 <0.9.0;
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./models/interfaces/IUniswapV2Router02.sol";
+import "./3rdDeFiInterfaces/IUniswapV2Router.sol";
 import "./Ownable.sol";
 
 contract Treasury is Ownable, Initializable {

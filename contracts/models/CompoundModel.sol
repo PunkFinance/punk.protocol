@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../interfaces/ModelInterface.sol";
 import "../Ownable.sol";
 import "../ModelStorage.sol";
-import "./interfaces/CTokenInterface.sol";
-import "./interfaces/IUniswapV2Router02.sol";
+import "../3rdDeFiInterfaces/CTokenInterface.sol";
+import "../3rdDeFiInterfaces/IUniswapV2Router.sol";
 
 contract CompoundModel is ModelInterface, ModelStorage, Ownable{
     using SafeERC20 for IERC20;
