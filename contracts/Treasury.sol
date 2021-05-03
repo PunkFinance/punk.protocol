@@ -29,19 +29,20 @@ contract Treasury is Ownable, Initializable {
     function buyBack() public OnlyAdminOrGovernance {
         // Hard Work Now! For Punkers by 0xViktor
         for( uint i = 0 ; i < _tokens.length ; i++ ){
+            
             uint balance = IERC20( _tokens[ i ] ).balanceOf( address( this ) );
-            IERC20( _tokens[ i ] ).approve(address(_uRouterV2), balance);
+            IERC20( _tokens[ i ] ).safeApprove(address(_uRouterV2), balance);
             
             address[] memory path = new address[](3);
-            path[0] = address(_tokens[i]);
+            path[0] = address( _tokens[i] );
             path[1] = IUniswapV2Router02(_uRouterV2).WETH();
-            path[2] = address(_punk);
+            path[2] = address( _punk );
 
             IUniswapV2Router02(_uRouterV2).swapExactTokensForTokens(
                 balance,
                 1,
                 path,
-                address(this),
+                _grinder,
                 block.timestamp
             );
         }

@@ -14,6 +14,8 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
     using SafeERC20 for IERC20;
     using SafeMath for uint;
 
+    event Swap( uint compAmount, uint underlying );
+
     address _cToken;
     address _comp;
     address _comptroller;
@@ -34,8 +36,8 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
             _cToken         = cToken_;
             _comp           = comp_;
             _comptroller    = comptroller_;
-            _uRouterV2  = uRouterV2_;
-            
+            _uRouterV2      = uRouterV2_;
+
     }
 
     function underlyingBalanceInModel() public override view returns ( uint256 [] memory ){
@@ -46,25 +48,36 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
     function underlyingBalanceWithInvestment() public override view returns ( uint256 [] memory ){
         // Hard Work Now! For Punkers by 0xViktor
         uint [] memory balances = underlyingBalanceInModel();
-        balances[0] += CTokenInterface( _cToken ).exchangeRateStored().mul( CTokenInterface( _cToken ).balanceOf( address( this ) ) ).div( 10e18 );
+        balances[0] += CTokenInterface( _cToken ).exchangeRateStored().mul( _cTokenBalanceOf() ).div( 1e18 );
         return balances;
     }
 
     function invest() public override {
         // Hard Work Now! For Punkers by 0xViktor
-        uint [] memory balances = underlyingBalanceInModel();
-        CTokenInterface( _cToken ).mint( balances[ 0 ] );
+        IERC20( token( 0 ) ).safeApprove( _cToken, underlyingBalanceInModel()[ 0 ] );
+
+        emit Invest( underlyingBalanceInModel(), block.timestamp );
+        CTokenInterface( _cToken ).mint( underlyingBalanceInModel()[ 0 ] );
+    }
+    
+    function reInvest() public OnlyAdminOrGovernance{
+        // Hard Work Now! For Punkers by 0xViktor
+        _claimComp();
+        _swapCompToUnderlying();
+        invest();
     }
 
     function withdrawAllToForge() public OnlyForge override{
         // Hard Work Now! For Punkers by 0xViktor
-        CTokenInterface( _cToken ).redeem( CTokenInterface( _cToken ).balanceOf( address( this ) ) );
-        claimComp();
-        liquidateComp();
+        _claimComp();
+        _swapCompToUnderlying();
+
+        emit Withdraw(  underlyingBalanceWithInvestment(), forge(), block.timestamp);
+        CTokenInterface( _cToken ).redeem( _cTokenBalanceOf() );
     }
 
     function withdrawToForge( uint256 [] memory amounts ) public OnlyForge override{
-        withdrawTo( amounts,forge() );
+        withdrawTo( amounts, forge() );
     }
 
     function withdrawTo( uint256 [] memory amounts, address to ) public OnlyForge override{
@@ -73,42 +86,41 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
         CTokenInterface( _cToken ).redeemUnderlying( amounts[0] );
         uint newBalance = IERC20( token(0) ).balanceOf( address( this ) );
         IERC20( token( 0 ) ).safeTransfer( to, newBalance.sub( oldBalance ) );
+        
+        emit Withdraw( amounts, forge(), block.timestamp);
     }
 
-    function claimComp() public {
-        // Hard Work Now! For Punkers by 0xViktor
-        CTokenInterface(_comptroller).claimComp(address(this));
+    function _cTokenBalanceOf() internal view returns( uint ){
+        return CTokenInterface( _cToken ).balanceOf( address( this ) );
     }
 
-    function reInvest() public OnlyAdminOrGovernance{
+    function _claimComp() internal {
         // Hard Work Now! For Punkers by 0xViktor
-        claimComp();
-        liquidateComp( );
-        invest();
+        CTokenInterface( _comptroller ).claimComp( address( this ) );
     }
 
-    function liquidateComp() internal {
+    function _swapCompToUnderlying() internal {
         // Hard Work Now! For Punkers by 0xViktor
-        uint oldBalance = IERC20(token(0)).balanceOf(address(this));
         uint balance = IERC20(_comp).balanceOf(address(this));
         if (balance > 0) {
 
-            IERC20(_comp).approve(address(_uRouterV2), balance);
+            IERC20(_comp).safeApprove(_uRouterV2, balance);
             
-            address[] memory path = new address[](2);
+            address[] memory path = new address[](3);
             path[0] = address(_comp);
-            path[1] = address(token(0));
+            path[1] = IUniswapV2Router02( _uRouterV2 ).WETH();
+            path[2] = address( token( 0 ) );
 
             IUniswapV2Router02(_uRouterV2).swapExactTokensForTokens(
                 balance,
                 1,
                 path,
                 address(this),
-                block.timestamp
+                block.timestamp + ( 15 * 60 )
             );
-        }
-        uint newBalance = IERC20(token(0)).balanceOf(address(this));
-    }
 
+            emit Swap(balance, underlyingBalanceInModel()[0]);
+        }
+    }
 
 }
