@@ -2,7 +2,6 @@
 pragma solidity >=0.5.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./ERC20Initialize.sol";
 import "./Ownable.sol";
@@ -15,7 +14,7 @@ import "./libs/Score.sol";
 
 contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
     using SafeMath for uint;
-    using SafeERC20 for ERC20;
+    using SafeERC20 for IERC20;
 
     uint constant SECONDS_DAY = 60*60*24;
     
@@ -45,6 +44,11 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
     
     function setModel( address model_ ) public OnlyAdminOrGovernance returns( bool ){
         require( Address.isContract( model_), "FORGE : Model is not a contract");
+        
+        ModelInterface( _model ).withdrawAllToForge();
+        IERC20( _token ).safeTransfer( model_, IERC20( _token ).balanceOf( address( this ) ) );
+        ModelInterface( model_ ).invest();
+        
         _model = model_;
         return true;
     }
@@ -76,8 +80,8 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         uint mint = amount.mul( totalSupply() == 0 ? _underlyingUnit() : totalSupply() ).div(   getTotalVolume() );
         _mint( _msgSender(), mint );
 
-        ERC20(_token ).safeTransferFrom( _msgSender(), address( this ), amount );
-        ERC20(_token ).safeTransfer( _model, amount );
+        IERC20(_token ).safeTransferFrom( _msgSender(), address( this ), amount );
+        IERC20(_token ).safeTransfer( _model, amount );
         ModelInterface(_model ).invest();
 
         _savers[ _msgSender() ].push( 
@@ -109,8 +113,8 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         uint mint = amount.mul( totalSupply() == 0 ? _underlyingUnit() : totalSupply() ).div(   getTotalVolume() );
         _mint( _msgSender(), mint );
         
-        ERC20( _token ).safeTransferFrom( _msgSender(), address( this ), amount );
-        ERC20( _token ).safeTransfer( _model, amount );
+        IERC20( _token ).safeTransferFrom( _msgSender(), address( this ), amount );
+        IERC20( _token ).safeTransfer( _model, amount );
         ModelInterface( _model ).invest();
 
         uint lastIndex = transactions(_msgSender(), index ).length.sub( 1 );
