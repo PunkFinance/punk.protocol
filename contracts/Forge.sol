@@ -48,7 +48,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
         ModelInterface( _model ).withdrawAllToForge();
         IERC20( _token ).safeTransfer( model_, IERC20( _token ).balanceOf( address( this ) ) );
         ModelInterface( model_ ).invest();
-        
+
         _model = model_;
         return true;
     }
@@ -210,7 +210,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
     function transactions( address account, uint index ) public view override returns ( Transaction [] memory ){ return _transactions[account][index]; }
 
     function exchangeRate() public view override returns( uint ){
-        return ( totalSupply() == 0 ? _underlyingUnit() : totalSupply() ).div(   getTotalVolume() );
+        return ( totalSupply() == 0 ? _underlyingUnit() : totalSupply() ).div( getTotalVolume() );
     }
 
     function getBonus() public view override returns( uint ){
