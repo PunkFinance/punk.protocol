@@ -63,7 +63,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
             uint count = diff.div( SECONDS_DAY.mul( s.interval ) ).add( 1 ); 
             count = count < s.count ? count : s.count;
             plpAmount = s.status == 2 ? 0 : s.mint.mul( count ).div( s.count ).sub( s.released );
-            amount = plpAmount.mul( getSharePrice() ).div( totalSupply() );
+            amount = plpAmount.mul( getExchangeRate( ) ).div( _tokenUnit );
         }
     }
     
@@ -87,8 +87,9 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     
     function addDeposit( uint index, uint amount ) public override returns( bool ){
         require( saver( msg.sender, index ).startTimestamp > block.timestamp );
+        require( saver( msg.sender, index ).status < 2 );
 
-        uint mint = amount.mul( totalSupply() == 0 ? _tokenUnit : totalSupply() ).div( getSharePrice() );
+        uint mint = amount.mul( getExchangeRate( ) ).div( _tokenUnit );
         _mint( msg.sender, mint );
         
         IERC20( _token ).safeTransferFrom( msg.sender, address( this ), amount );
@@ -120,7 +121,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         require( ableAmount >= amount );
 
         uint bonus = balanceOf( address( this ) ).mul( saver( msg.sender, index ).score ).mul( amount ).div( saver( msg.sender, index ).mint ).div( totalScore() );
-        uint bonusAmount = bonus.mul( getSharePrice() ).div( totalSupply() );
+        uint bonusAmount = bonus.mul( getExchangeRate( ) ).div( _tokenUnit );
 
         _burn( msg.sender, amount );
         _burn( address( this ), bonus );
@@ -128,7 +129,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         ModelInterface( modelAddress() ).withdrawTo( ( amount + bonusAmount ).mul( _variables.buybackRate() ).div( 100 ), _treasury );
         
         _savers[ msg.sender ][index].released += plp;
-        _savers[msg.sender][index].accAmount += amount;
+        _savers[msg.sender][index].relAmount += amount;
         
         _transactions[ msg.sender ][index].push( Transaction( false, block.timestamp, amount ) );
         _savers[msg.sender][index].status = 1;
@@ -149,7 +150,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
 
         uint terminateFee = saver( msg.sender, index ).mint.mul( _variables.earlyTerminateFee() ).div( 100 );
         uint returnAmount = saver( msg.sender, index ).mint.sub( terminateFee );
-        uint underlyingAmount = returnAmount.mul( getSharePrice() ).div( totalSupply() );
+        uint underlyingAmount = returnAmount.mul( getExchangeRate( ) ).div( _tokenUnit );
 
         _burn( msg.sender, saver( msg.sender, index ).mint );
         _mint( address( this ), terminateFee );
@@ -164,8 +165,12 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         return true;
     }
 
-    function getSharePrice() internal view returns( uint ){
-        return ModelInterface(_model ).underlyingBalanceWithInvestment() == 0 ? _tokenUnit : ModelInterface(_model ).underlyingBalanceWithInvestment();
+    function getExchangeRate() public view override returns( uint ){
+        return totalSupply( ) == 0 ? _tokenUnit : _tokenUnit.mul( ModelInterface(_model ).underlyingBalanceWithInvestment() ).div( totalSupply( ) );
+    }
+
+    function getBonus() public view override returns( uint ){
+        return balanceOf( address( this ) ).mul( getExchangeRate( ) ).div( _tokenUnit );
     }
 
     function getTotalVolume() public view override returns( uint ){

@@ -26,6 +26,8 @@ interface ForgeInterface{
     function saver( address account, uint index ) external view returns( Saver memory );
     function transactions( address account, uint index ) external view returns ( Transaction [] memory );
 
+    function getExchangeRate() external view returns( uint );
+    function getBonus() external view returns( uint );
     function getTotalVolume( ) external view returns( uint );
 
 }
