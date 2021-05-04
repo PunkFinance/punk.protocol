@@ -3,15 +3,15 @@ pragma solidity >=0.5.0 <0.9.0;
 
 interface ModelInterface{
 
-    event Invest( uint [] amounts, uint timestamp );
-    event Withdraw( uint [] amounts, address to, uint timestamp  );
+    event Invest( uint amount, uint timestamp );
+    event Withdraw( uint amount, address to, uint timestamp  );
 
-    function underlyingBalanceInModel() external view returns ( uint256 [] memory );
-    function underlyingBalanceWithInvestment() external view returns ( uint256 [] memory );
+    function underlyingBalanceInModel() external view returns ( uint256 );
+    function underlyingBalanceWithInvestment() external view returns ( uint256 );
 
     function invest() external;
     function withdrawAllToForge() external;
-    function withdrawToForge( uint256 [] memory amounts ) external;
-    function withdrawTo( uint256 [] memory amounts, address to )  external;
+    function withdrawToForge( uint256 amount ) external;
+    function withdrawTo( uint256 amount, address to )  external;
     
 }

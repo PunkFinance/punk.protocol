@@ -6,3 +6,4 @@
 package-lock.json
 /contracts/models/TestModel.sol
 /contracts/PunkRewardPool.sol
+.DS_Store

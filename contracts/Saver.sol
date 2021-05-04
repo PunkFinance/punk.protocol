@@ -8,6 +8,8 @@ struct Saver{
     uint interval;
     uint256 mint;
     uint256 released;
+    uint256 accAmount;
+    uint256 relAmount;
     uint score;
     uint status;
     uint updatedTimestamp;

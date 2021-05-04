@@ -12,17 +12,17 @@ contract Ownable{
     }
 
     modifier OnlyAdmin(){
-        require( _storage.isAdmin(msg.sender), "OWNABLE : Not a admin" );
+        require( _storage.isAdmin(msg.sender) );
         _;
     }
 
     modifier OnlyGovernance(){
-        require( _storage.isGovernance( msg.sender ), "OWNABLE : Not a Governance" );
+        require( _storage.isGovernance( msg.sender ) );
         _;
     }
 
     modifier OnlyAdminOrGovernance(){
-        require( _storage.isAdmin(msg.sender) || _storage.isGovernance( msg.sender ), "OWNABLE : Not a Admin or Governance" );
+        require( _storage.isAdmin(msg.sender) || _storage.isGovernance( msg.sender ) );
         _;
     }
 

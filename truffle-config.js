@@ -8,7 +8,8 @@ const etherscanKey = process.env.ETHERSCAN_KEY;
 
 module.exports = {
   plugins:[
-    'truffle-plugin-verify'
+    'truffle-plugin-verify',
+    "truffle-contract-size"
   ],
   api_keys: {
     etherscan: etherscanKey

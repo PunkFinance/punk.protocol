@@ -3,16 +3,16 @@ pragma solidity >=0.5.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./ERC20Initialize.sol";
-import "./Ownable.sol";
-import "./Saver.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/ForgeInterface.sol";
 import "./interfaces/ModelInterface.sol";
+import "./Ownable.sol";
+import "./Saver.sol";
 import "./ForgeStorage.sol";
-import "./libs/Math.sol";
 import "./libs/Score.sol";
 
-contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
+contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
@@ -29,8 +29,11 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
             address token_
         ) public initializer {
 
-        ERC20Initialize.initialize( name_, symbol_, decimals_);
         Ownable.initialize( storage_ );
+
+        _name = name_;
+        _symbol = symbol_;
+        _decimals = decimals_;
 
         _variables      = Variables( variables_ );
         _treasury       = treasury_;
@@ -43,207 +46,130 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
     }
     
     function setModel( address model_ ) public OnlyAdminOrGovernance returns( bool ){
-        require( Address.isContract( model_), "FORGE : Model is not a contract");
+        require( Address.isContract( model_));
         
         ModelInterface( _model ).withdrawAllToForge();
         IERC20( _token ).safeTransfer( model_, IERC20( _token ).balanceOf( address( this ) ) );
         ModelInterface( model_ ).invest();
-
         _model = model_;
+        
         return true;
     }
-    
-    function calcTerminateFee( address account, uint index ) public view override returns ( uint ){
-        return saver( account, index ).mint.mul( _terminateFee() ).div( 100 );
-    }
-    
-    function withdrawable( address account, uint index ) public view override returns( uint amount, uint count, uint endTimestamp ){
-        Saver memory s = saver( account, index );
-        endTimestamp = s.startTimestamp.add( SECONDS_DAY.mul( s.count ).mul( s.interval ) );
 
-        if( s.startTimestamp < _blockTimestamp() ) {
-            uint diff = _blockTimestamp().sub( s.startTimestamp );
-            count = diff.div( SECONDS_DAY.mul( s.interval ) ).add( 1 ); 
+    function withdrawable( address account, uint index ) public view override returns( uint amount, uint plpAmount ){
+        Saver memory s = saver( account, index );
+        if( s.startTimestamp < block.timestamp ) {
+            uint diff = block.timestamp.sub( s.startTimestamp );
+            uint count = diff.div( SECONDS_DAY.mul( s.interval ) ).add( 1 ); 
             count = count < s.count ? count : s.count;
-            amount = s.status == 2 ? 0 : s.mint.mul( count ).div( s.count ).sub( s.released );
+            plpAmount = s.status == 2 ? 0 : s.mint.mul( count ).div( s.count ).sub( s.released );
+            amount = plpAmount.mul( getSharePrice() ).div( totalSupply() );
         }
     }
     
     function countByAccount( address account ) public view override returns ( uint ){ return _savers[account].length; }
     
     function craftingSaver( uint amount, uint startTimestamp, uint count, uint interval ) public override returns( bool ){
-        require( amount > 0 && count > 0 && interval > 0, "FORGE : amount, count, interval must be greater than zero.");
-        require( startTimestamp > _blockTimestamp() , "FORGE : startTimestamp is earlier than the current blockTime." );
+        require( amount > 0 && count > 0 && interval > 0);
+        require( startTimestamp > block.timestamp  );
 
-        uint index = countByAccount( _msgSender() ) == 0 ? 0 : countByAccount( _msgSender() );
-        
-        uint mint = amount.mul( totalSupply() == 0 ? _underlyingUnit() : totalSupply() ).div(   getTotalVolume() );
-        _mint( _msgSender(), mint );
+        uint index = countByAccount( msg.sender ) == 0 ? 0 : countByAccount( msg.sender );
 
-        IERC20(_token ).safeTransferFrom( _msgSender(), address( this ), amount );
-        IERC20(_token ).safeTransfer( _model, amount );
-        ModelInterface(_model ).invest();
-
-        _savers[ _msgSender() ].push( 
-            Saver( 
-                    _blockTimestamp(), 
-                    startTimestamp, 
-                    count, 
-                    interval, 
-                    mint, 
-                    0, 
-                    0, 
-                    0, 
-                    _blockTimestamp() 
-                )
-            );
-        _transactions[ _msgSender() ][ index ].push( Transaction( true, _blockTimestamp(), amount ) );
+        _savers[ msg.sender ].push( Saver( block.timestamp, startTimestamp, count, interval, 0, 0, 0, 0, 0, 0, block.timestamp ) );
+        _transactions[ msg.sender ][ index ].push( Transaction( true, block.timestamp, 0 ) );
         _count++;
         
-        _updateScore( _msgSender(), index );
-
-        uint [] memory deposits = new uint [] ( 1 ); deposits[0] = amount;
-        emit CraftingSaver( _msgSender(), index, deposits );
+        addDeposit(index, amount);
+        
+        emit CraftingSaver( msg.sender, index, amount );
         return true;
     }
     
     function addDeposit( uint index, uint amount ) public override returns( bool ){
-        require( saver( msg.sender, index ).startTimestamp < _blockTimestamp(), "FORGE : time for additional deposits has been exceeded." );
+        require( saver( msg.sender, index ).startTimestamp > block.timestamp );
 
-        uint mint = amount.mul( totalSupply() == 0 ? _underlyingUnit() : totalSupply() ).div(   getTotalVolume() );
-        _mint( _msgSender(), mint );
+        uint mint = amount.mul( totalSupply() == 0 ? _tokenUnit : totalSupply() ).div( getSharePrice() );
+        _mint( msg.sender, mint );
         
-        IERC20( _token ).safeTransferFrom( _msgSender(), address( this ), amount );
+        IERC20( _token ).safeTransferFrom( msg.sender, address( this ), amount );
         IERC20( _token ).safeTransfer( _model, amount );
         ModelInterface( _model ).invest();
 
-        uint lastIndex = transactions(_msgSender(), index ).length.sub( 1 );
+        uint lastIndex = transactions(msg.sender, index ).length.sub( 1 );
 
-        if( _blockTimestamp().sub( transactions(_msgSender(), index )[ lastIndex ].timestamp ) < SECONDS_DAY ){
-            transactions(_msgSender(), index )[ lastIndex ].amount += amount;
+        if( block.timestamp.sub( transactions(msg.sender, index )[ lastIndex ].timestamp ) < SECONDS_DAY ){
+            _transactions[msg.sender][ index ][ lastIndex ].amount += amount;
         }else{
-            _transactions[_msgSender()][ index ].push( Transaction( true, _blockTimestamp(), amount ) );
+            _transactions[msg.sender][ index ].push( Transaction( true, block.timestamp, amount ) );
         }
 
-        _updateScore( _msgSender(), index );
-        _addMint( _msgSender(), index, mint );
-        _updateSaver( _msgSender(), index );
+        _updateScore( msg.sender, index );
+        _savers[msg.sender][index].mint += mint;
+        _savers[msg.sender][index].accAmount += amount;
+        _savers[msg.sender][index].updatedTimestamp = block.timestamp;
 
-        uint [] memory deposits = new uint [] ( 1 ); deposits[0] = amount;
-        emit AddDeposit( _msgSender(), index, deposits );
+        emit AddDeposit( msg.sender, index, amount );
         return true;
     }
     
     function withdraw( uint index, uint amount ) public override returns( bool ){
-        require( saver( _msgSender(), index ).status < 2, "FORGE : saver has already been terminated or closed." );
+        require( saver( msg.sender, index ).status < 2 );
 
-        ( uint ableAmount, uint count, uint endTimestamp ) = withdrawable( _msgSender(), index );
+        ( uint ableAmount, uint plp ) = withdrawable( msg.sender, index );
         
-        require( ableAmount >= amount, "FORGE : entered an amount higher than the amount you can withdraw." );
+        require( ableAmount >= amount );
 
-        uint bonus                      = getBonus()
-                                            .mul( saver( _msgSender(), index ).score )
-                                            .mul( amount )
-                                            .div( saver( _msgSender(), index ).mint )
-                                            .div( totalScore() );
+        uint bonus = balanceOf( address( this ) ).mul( saver( msg.sender, index ).score ).mul( amount ).div( saver( msg.sender, index ).mint ).div( totalScore() );
+        uint bonusAmount = bonus.mul( getSharePrice() ).div( totalSupply() );
 
-        uint underlyingAmount           = ( amount + bonus )
-                                            .mul(  getTotalVolume() )
-                                            .div( totalSupply() );
-
-        uint buyBackAmount              = underlyingAmount.mul( _variables.buybackRate() ).div( 100 );
-        
-        uint [] memory amounts          = new uint [] ( 1 ); amounts[0] = underlyingAmount.sub( buyBackAmount );
-        uint [] memory buyBackAmounts   = new uint [] ( 1 ); amounts[0] = buyBackAmount;
-        
-        _burn( _msgSender(), amount );
+        _burn( msg.sender, amount );
         _burn( address( this ), bonus );
-        ModelInterface( modelAddress() ).withdrawTo( amounts, _msgSender() );
-        ModelInterface( modelAddress() ).withdrawTo( buyBackAmounts, _treasury );
+        ModelInterface( modelAddress() ).withdrawTo( ( amount + bonusAmount ).mul( 100 - _variables.buybackRate() ).div( 100 ), msg.sender );
+        ModelInterface( modelAddress() ).withdrawTo( ( amount + bonusAmount ).mul( _variables.buybackRate() ).div( 100 ), _treasury );
         
-        _savers[ _msgSender() ][index].released += amount;
-        _transactions[ _msgSender() ][index].push( Transaction( false, _blockTimestamp(), amount ) );
-
-        if( saver( _msgSender(), index ).status == 0 ) { _updateStatus( _msgSender(), index, 1 ); }
-        if( saver( _msgSender(), index ).count == count && saver( _msgSender(), index ).mint == saver( _msgSender(), index ).released && _blockTimestamp() > endTimestamp ) {
-            _totalScore = _totalScore.sub( saver( _msgSender(), index ).score );
-            _updateStatus( _msgSender(), index, 3 );
+        _savers[ msg.sender ][index].released += plp;
+        _savers[msg.sender][index].accAmount += amount;
+        
+        _transactions[ msg.sender ][index].push( Transaction( false, block.timestamp, amount ) );
+        _savers[msg.sender][index].status = 1;
+        if( saver( msg.sender, index ).mint == saver( msg.sender, index ).released ) {
+            _totalScore = _totalScore.sub( saver( msg.sender, index ).score );
+            _savers[msg.sender][index].status = 3;
         }
-        
-        _updateSaver( _msgSender(), index );
+        _savers[msg.sender][index].updatedTimestamp = block.timestamp;
 
-        emit Withdraw( _msgSender(), index, amounts );
+        emit Withdraw( msg.sender, index, ( amount + bonusAmount ).mul( 100 - _variables.buybackRate() ).div( 100 ) );
         return true;
     }
     
     function terminateSaver( uint index ) public override returns( bool ){
-        require( saver( _msgSender(), index ).status < 2, "FORGE : saver has already been terminated or closed." );
+        require( saver( msg.sender, index ).status < 2 );
         
-        _updateStatus( _msgSender(), index, 2 );
+        _savers[msg.sender][index].status = 2;
 
-        uint terminateFee = calcTerminateFee( _msgSender(), index );
-        uint returnAmount = saver( _msgSender(), index ).mint.sub( terminateFee );
-        uint underlyingAmount = returnAmount.mul(  getTotalVolume() ).div( totalSupply() );
-        uint [] memory amounts = new uint [] ( 1 ); amounts[0] = underlyingAmount;
+        uint terminateFee = saver( msg.sender, index ).mint.mul( _variables.earlyTerminateFee() ).div( 100 );
+        uint returnAmount = saver( msg.sender, index ).mint.sub( terminateFee );
+        uint underlyingAmount = returnAmount.mul( getSharePrice() ).div( totalSupply() );
 
-        _burn( _msgSender(), saver( _msgSender(), index ).mint );
+        _burn( msg.sender, saver( msg.sender, index ).mint );
         _mint( address( this ), terminateFee );
-        ModelInterface( modelAddress() ).withdrawTo( amounts, _msgSender() );
+        ModelInterface( modelAddress() ).withdrawTo( underlyingAmount, msg.sender );
         
-        _totalScore = _totalScore.sub( saver( _msgSender(), index ).score );
-        _transactions[ _msgSender() ][index].push( Transaction( false, _blockTimestamp(), underlyingAmount ) );
+        _totalScore = _totalScore.sub( saver( msg.sender, index ).score );
+        _transactions[ msg.sender ][index].push( Transaction( false, block.timestamp, returnAmount ) );
         
-        _updateSaver( _msgSender(), index );
+        _savers[msg.sender][index].updatedTimestamp = block.timestamp;
 
-        emit Terminate( _msgSender(), index, amounts );
+        emit Terminate( msg.sender, index, underlyingAmount );
         return true;
     }
 
-    function modelAddress() public view override returns ( address ){ return _model; }
-
-    function countAll() public view override returns( uint ){ return _count; }
-    
-    function totalScore() public view override returns( uint ){ return _totalScore; }
-    
-    function saver( address account, uint index ) public view override returns( Saver memory ){ return _savers[account][index]; }
-
-    function transactions( address account, uint index ) public view override returns ( Transaction [] memory ){ return _transactions[account][index]; }
-
-    function exchangeRate() public view override returns( uint ){
-        return ( totalSupply() == 0 ? _underlyingUnit() : totalSupply() ).div( getTotalVolume() );
+    function getSharePrice() internal view returns( uint ){
+        return ModelInterface(_model ).underlyingBalanceWithInvestment() == 0 ? _tokenUnit : ModelInterface(_model ).underlyingBalanceWithInvestment();
     }
 
-    function getBonus() public view override returns( uint ){
-        return balanceOf( address( this ) );
-    }
-
-    function getBonusUnderlying() public view override returns( uint ){
-        return totalSupply() == 0 ? 0 : balanceOf( address( this ) ).mul(  getTotalVolume() ).div( totalSupply() );
-    }
-
-    function  getTotalVolume() public view override returns( uint ){
-        return ModelInterface(_model ).underlyingBalanceWithInvestment()[0] == 0 ? _underlyingUnit() : ModelInterface(_model ).underlyingBalanceWithInvestment()[0];
-    }
-
-    // Internal
-    function _underlyingUnit() internal view returns( uint ) {
-        return _tokenUnit;
-    }
-    
-    function _terminateFee() internal view returns ( uint ){
-        return _variables.earlyTerminateFee();
-    }
-    
-    function _addMint( address account, uint index, uint mint ) internal {
-        _savers[account][index].mint += mint;
-    }
-
-    function _updateStatus( address account, uint index, uint status ) internal {
-        _savers[account][index].status = status;
-    }
-    
-    function _updateSaver( address account, uint index ) internal {
-        _savers[account][index].updatedTimestamp = _blockTimestamp();
+    function getTotalVolume() public view override returns( uint ){
+        return ModelInterface(_model ).underlyingBalanceWithInvestment() == 0 ? 0 : ModelInterface(_model ).underlyingBalanceWithInvestment();
     }
     
     function _updateScore( address account, uint index ) internal {
@@ -258,10 +184,15 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20Initialize{
                 );
         _totalScore = _totalScore.sub( beforeScore ).add( _savers[account][ index ].score );
     }
+  
+    function modelAddress() public view override returns ( address ){ return _model; }
 
-    // Read Only
-    function _blockTimestamp() internal view returns( uint ){
-        return block.timestamp;
-    }
+    function countAll() public view override returns( uint ){ return _count; }
+    
+    function totalScore() public view override returns( uint ){ return _totalScore; }
+    
+    function saver( address account, uint index ) public view override returns( Saver memory ){ return _savers[account][index]; }
+
+    function transactions( address account, uint index ) public view override returns ( Transaction [] memory ){ return _transactions[account][index]; }
 
 }

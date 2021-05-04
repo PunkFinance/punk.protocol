@@ -40,24 +40,21 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
 
     }
 
-    function underlyingBalanceInModel() public override view returns ( uint256 [] memory ){
-        uint [] memory balances = new uint [] (1); balances[0] = IERC20( token( 0 ) ).balanceOf( address( this ) );
-        return balances;
+    function underlyingBalanceInModel() public override view returns ( uint256 ){
+        return IERC20( token( 0 ) ).balanceOf( address( this ) );
     }
 
-    function underlyingBalanceWithInvestment() public override view returns ( uint256 [] memory ){
+    function underlyingBalanceWithInvestment() public override view returns ( uint256 ){
         // Hard Work Now! For Punkers by 0xViktor
-        uint [] memory balances = underlyingBalanceInModel();
-        balances[0] += CTokenInterface( _cToken ).exchangeRateStored().mul( _cTokenBalanceOf() ).div( 1e18 );
-        return balances;
+        return underlyingBalanceInModel().add( CTokenInterface( _cToken ).exchangeRateStored().mul( _cTokenBalanceOf() ).div( 1e18 ) );
     }
 
     function invest() public override {
         // Hard Work Now! For Punkers by 0xViktor
-        IERC20( token( 0 ) ).safeApprove( _cToken, underlyingBalanceInModel()[ 0 ] );
+        IERC20( token( 0 ) ).safeApprove( _cToken, underlyingBalanceInModel() );
 
         emit Invest( underlyingBalanceInModel(), block.timestamp );
-        CTokenInterface( _cToken ).mint( underlyingBalanceInModel()[ 0 ] );
+        CTokenInterface( _cToken ).mint( underlyingBalanceInModel() );
     }
     
     function reInvest() public OnlyAdminOrGovernance{
@@ -76,18 +73,18 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
         CTokenInterface( _cToken ).redeem( _cTokenBalanceOf() );
     }
 
-    function withdrawToForge( uint256 [] memory amounts ) public OnlyForge override{
-        withdrawTo( amounts, forge() );
+    function withdrawToForge( uint256 amount ) public OnlyForge override{
+        withdrawTo( amount, forge() );
     }
 
-    function withdrawTo( uint256 [] memory amounts, address to ) public OnlyForge override{
+    function withdrawTo( uint256 amount, address to ) public OnlyForge override{
         // Hard Work Now! For Punkers by 0xViktor
         uint oldBalance = IERC20( token(0) ).balanceOf( address( this ) );
-        CTokenInterface( _cToken ).redeemUnderlying( amounts[0] );
+        CTokenInterface( _cToken ).redeemUnderlying( amount );
         uint newBalance = IERC20( token(0) ).balanceOf( address( this ) );
         IERC20( token( 0 ) ).safeTransfer( to, newBalance.sub( oldBalance ) );
         
-        emit Withdraw( amounts, forge(), block.timestamp);
+        emit Withdraw( amount, forge(), block.timestamp);
     }
 
     function _cTokenBalanceOf() internal view returns( uint ){
@@ -119,7 +116,7 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
                 block.timestamp + ( 15 * 60 )
             );
 
-            emit Swap(balance, underlyingBalanceInModel()[0]);
+            emit Swap(balance, underlyingBalanceInModel());
         }
     }
 
