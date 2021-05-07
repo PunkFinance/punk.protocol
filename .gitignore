@@ -5,5 +5,5 @@
 /build
 package-lock.json
 /contracts/models/TestModel.sol
-/contracts/PunkRewardPool.sol
+/contracts/OnlyTransfer.sol
 .DS_Store
