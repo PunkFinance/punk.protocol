@@ -1,9 +1,10 @@
 .env
+.DS_Store
+package-lock.json
 /migrations
 /test
-/node_modules
 /build
-package-lock.json
+/node_modules/*
+!/node_modules/@openzeppelin
 /contracts/models/TestModel.sol
 /contracts/OnlyTransfer.sol
-.DS_Store

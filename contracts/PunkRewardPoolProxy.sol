@@ -10,8 +10,8 @@ contract PunkRewardPoolProxy is Proxy{
     event Upgraded(address indexed implementation);
 
     bytes32 private constant _IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
-    bytes32 private constant _OWNABLE_STORAGE_SLOT = 0xb39836d625a4efe66fcfaa81a972ba97548a953a597399c161cd7df952bcf2e8;
-    bytes32 private constant _INITIALIZE_SLOT = 0x5995627934808137c9bf9d6f83d56749658ca23d1b6461c2a912ee34403ccd6a;
+    bytes32 private constant _OWNABLE_STORAGE_SLOT = 0x8de9519aeedcea35f7581a1710364953511221d8b7309789ecb15ac4b1a06fc1;
+    bytes32 private constant _INITIALIZE_SLOT = 0xd1144699b2459fa4c652fe6a4a3ddb7d1dd632f82d755cb1d4bc09b8ef6d4b4f;
 
     modifier isInitializer(){
         require( getInitialize() != 1, "Initializable: contract is already initialized");
@@ -25,8 +25,8 @@ contract PunkRewardPoolProxy is Proxy{
 
     function initialize( address implAddress, bytes memory initData, address storage_ ) public isInitializer{
         require(_IMPLEMENTATION_SLOT == bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1));
-        require(_OWNABLE_STORAGE_SLOT == bytes32(uint256(keccak256("forge.proxy.ownablestrage")) - 1));
-        require(_INITIALIZE_SLOT == bytes32(uint256(keccak256("forge.proxy.initialize")) - 1));
+        require(_OWNABLE_STORAGE_SLOT == bytes32(uint256(keccak256("punk.reward.proxy.ownablestrage")) - 1));
+        require(_INITIALIZE_SLOT == bytes32(uint256(keccak256("punk.reward.proxy.initialize")) - 1));
 
         _setImplementation(implAddress);
         _setStorage( storage_ );

@@ -16,7 +16,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
-    uint constant SECONDS_DAY = 60*60*24;
+    uint constant SECONDS_DAY = 86400;
     
     function initializeForge( 
             address storage_, 
@@ -158,8 +158,9 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         require( saver( msg.sender, index ).status < 2 );
         
         _savers[msg.sender][index].status = 2;
-
-        uint terminateFee = saver( msg.sender, index ).mint.mul( _variables.earlyTerminateFee() ).div( 100 );
+        
+        uint fee = _variables.isEmergency( address( this ) ) ? 0 : _variables.earlyTerminateFee();
+        uint terminateFee = saver( msg.sender, index ).mint.mul( fee ).div( 100 );
         uint returnAmount = saver( msg.sender, index ).mint.sub( terminateFee );
         uint underlyingAmount = returnAmount.mul( _tokenUnit ).div( getExchangeRate( ) );
 

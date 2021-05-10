@@ -8,6 +8,7 @@ contract Variables is Ownable{
 
     uint256 private _earlyTerminateFee;
     uint256 private _buybackRate;
+    mapping( address => bool ) _emergency;
 
     constructor( address storage_ ) payable {
         Ownable.initialize(storage_);
@@ -27,6 +28,14 @@ contract Variables is Ownable{
     function setBuybackRate( uint256 buybackRate_ ) public OnlyGovernance {
         require(  1 <= buybackRate_ && buybackRate_ < 30, "VARIABLES : BuybackRate range from 1 to 30." );
         _buybackRate = buybackRate_;
+    }
+
+    function setEmergency( address forge, bool emergency ) public OnlyAdmin {
+        _emergency[ forge ] = emergency;
+    }
+
+    function isEmergency( address forge ) public view returns( bool ){
+        return _emergency[ forge ];
     }
 
 }
