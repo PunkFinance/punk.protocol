@@ -12,7 +12,7 @@ To resist them, we’re forging financial weapons the first item is the Saver. S
 
 Website: [https://punk.finance/](https://punk.finance/)
 
-Discord: [https://discord.gg/z8TRNsKC2k](https://discord.com/invite/punk)
+Discord: [https://discord.com/invite/punk](https://discord.com/invite/punk)
 
 Telegram: [https://t.me/punkprotocol](https://t.me/punkprotocol)
 
