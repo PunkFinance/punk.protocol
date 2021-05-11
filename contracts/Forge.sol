@@ -78,9 +78,8 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         _transactions[ msg.sender ][ index ].push( Transaction( true, block.timestamp, 0 ) );
         _count++;
         
-        addDeposit(index, amount);
-        
         emit CraftingSaver( msg.sender, index, amount );
+        addDeposit(index, amount);
         return true;
     }
     
@@ -174,7 +173,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         _savers[msg.sender][index].updatedTimestamp = block.timestamp;
 
         emit Terminate( msg.sender, index, underlyingAmount );
-        emit Bonus( msg.sender, index, returnAmount.sub( underlyingAmount ) );
+        emit Bonus( msg.sender, index, terminateFee.mul( _tokenUnit ).div( getExchangeRate( ) ) );
         return true;
     }
 
