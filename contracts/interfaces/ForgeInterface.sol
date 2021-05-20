@@ -13,7 +13,7 @@ interface ForgeInterface{
 
     function modelAddress() external view returns (address);
 
-    function withdrawable( address account, uint index ) external view returns(uint, uint);
+    function withdrawable( address account, uint index ) external view returns(uint);
     function countByAccount( address account ) external view returns (uint);
     
     function craftingSaver( uint amount, uint startTimestamp, uint count, uint interval ) external returns(bool);

@@ -30,15 +30,15 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         ) public initializer {
 
         Ownable.initialize( storage_ );
+        _variables      = Variables( variables_ );
+        _treasury       = treasury_;
 
         _name = name_;
         _symbol = symbol_;
         _decimals = decimals_;
 
-        _variables      = Variables( variables_ );
-        _treasury       = treasury_;
-        _token          = token_;
         _model          = model_;
+        _token          = token_;
         _tokenUnit      = 10**ERC20( _token ).decimals();
 
         _count          = 0;
@@ -56,14 +56,13 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         return true;
     }
 
-    function withdrawable( address account, uint index ) public view override returns( uint amount, uint plpAmount ){
+    function withdrawable( address account, uint index ) public view override returns( uint amountPlp ){
         Saver memory s = saver( account, index );
         if( s.startTimestamp < block.timestamp ) {
             uint diff = block.timestamp.sub( s.startTimestamp );
             uint count = diff.div( SECONDS_DAY.mul( s.interval ) ).add( 1 ); 
             count = count < s.count ? count : s.count;
-            plpAmount = s.status == 2 ? 0 : s.mint.mul( count ).div( s.count ).sub( s.released );
-            amount = plpAmount.mul( getExchangeRate( ) ).div( _tokenUnit );
+            amountPlp = s.status == 2 ? 0 : s.mint.mul( count ).div( s.count ).sub( s.released );
         }
     }
     
@@ -71,7 +70,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     
     function craftingSaver( uint amount, uint startTimestamp, uint count, uint interval ) public override returns( bool ){
         require( amount > 0 && count > 0 && interval > 0);
-        require( startTimestamp > block.timestamp  );
+        require( startTimestamp > block.timestamp.add( 24 * 60 * 60 )  );
 
         uint index = countByAccount( msg.sender ) == 0 ? 0 : countByAccount( msg.sender );
 
@@ -113,24 +112,36 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         return true;
     }
     
-    function withdraw( uint index, uint amount ) public override returns( bool ){
+    function withdraw( uint index, uint amountPlp ) public override returns( bool ){
         require( saver( msg.sender, index ).status < 2 );
-
-        ( uint ableAmount, uint plp ) = withdrawable( msg.sender, index );
         
-        require( ableAmount >= amount );
+        Saver memory s = saver( msg.sender, index );
 
-        uint bonus = balanceOf( address( this ) ).mul( saver( msg.sender, index ).score ).mul( amount ).div( saver( msg.sender, index ).mint ).div( totalScore() );
-        uint bonusAmount = bonus.mul( getExchangeRate( ) ).div( _tokenUnit );
+        uint ableAmountPlp = withdrawable( msg.sender, index );
 
-        _burn( msg.sender, amount );
-        _burn( address( this ), bonus );
-        ModelInterface( modelAddress() ).withdrawTo( ( amount + bonusAmount ).mul( 100 - _variables.buybackRate() ).div( 100 ), msg.sender );
-        ModelInterface( modelAddress() ).withdrawTo( ( amount + bonusAmount ).mul( _variables.buybackRate() ).div( 100 ), _treasury );
-        
-        _savers[ msg.sender ][index].released += plp;
-        _savers[msg.sender][index].relAmount += amount;
-        
+        require( ableAmountPlp >= amountPlp );
+
+        uint bonusPlp = balanceOf( address( this ) )
+                                .mul( s.score )
+                                .mul( amountPlp )
+                                .div( s.mint )
+                                .div( totalScore() );
+
+        uint bonusAmount = bonusPlp.mul( _tokenUnit ).div( getExchangeRate( ) );
+        uint amount = amountPlp.mul( _tokenUnit ).div( getExchangeRate( ) );
+
+        _burn( msg.sender, amountPlp );
+        _burn( address( this ), bonusPlp );
+
+        uint profit = ( amount + bonusAmount ).sub( s.accAmount.mul( amountPlp ).div( s.mint ) );
+        uint buyback = profit.mul( _variables.buybackRate() ).div( 100 );
+
+        ModelInterface( modelAddress() ).withdrawTo( ( amount + bonusAmount ).sub( buyback ) , msg.sender );
+        ModelInterface( modelAddress() ).withdrawTo( buyback , _treasury );
+
+        _savers[ msg.sender ][index].released += amountPlp;
+        _savers[msg.sender][index].relAmount += ( amount + bonusAmount ).sub( buyback );
+
         _transactions[ msg.sender ][index].push( Transaction( false, block.timestamp, amount ) );
         _savers[msg.sender][index].status = 1;
         if( saver( msg.sender, index ).mint == saver( msg.sender, index ).released ) {
@@ -139,7 +150,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         }
         _savers[msg.sender][index].updatedTimestamp = block.timestamp;
 
-        emit Withdraw( msg.sender, index, ( amount + bonusAmount ).mul( 100 - _variables.buybackRate() ).div( 100 ) );
+        emit Withdraw( msg.sender, index, ( amount + bonusAmount ).sub( buyback ) );
         return true;
     }
     
@@ -150,7 +161,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
 
         uint terminateFee = saver( msg.sender, index ).mint.mul( _variables.earlyTerminateFee() ).div( 100 );
         uint returnAmount = saver( msg.sender, index ).mint.sub( terminateFee );
-        uint underlyingAmount = returnAmount.mul( getExchangeRate( ) ).div( _tokenUnit );
+        uint underlyingAmount = returnAmount.mul( _tokenUnit ).div( getExchangeRate( ) );
 
         _burn( msg.sender, saver( msg.sender, index ).mint );
         _mint( address( this ), terminateFee );
@@ -166,15 +177,15 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     }
 
     function getExchangeRate() public view override returns( uint ){
-        return totalSupply( ) == 0 ? _tokenUnit : _tokenUnit.mul( ModelInterface(_model ).underlyingBalanceWithInvestment() ).div( totalSupply( ) );
+        return totalSupply( ) == 0 ? _tokenUnit : _tokenUnit.mul( totalSupply() ).div( ModelInterface(_model ).underlyingBalanceWithInvestment() );
     }
 
     function getBonus() public view override returns( uint ){
-        return balanceOf( address( this ) ).mul( getExchangeRate( ) ).div( _tokenUnit );
+        return balanceOf( address( this ) ).mul( _tokenUnit ).div( getExchangeRate( ) );
     }
 
     function getTotalVolume() public view override returns( uint ){
-        return ModelInterface(_model ).underlyingBalanceWithInvestment() == 0 ? 0 : ModelInterface(_model ).underlyingBalanceWithInvestment();
+        return ModelInterface(_model ).underlyingBalanceWithInvestment();
     }
     
     function _updateScore( address account, uint index ) internal {

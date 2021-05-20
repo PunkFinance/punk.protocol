@@ -21,7 +21,5 @@ contract ForgeStorage{
     uint internal _count;
     uint internal _totalScore;
 
-
-
     uint256[50] private ______gap;
 }
