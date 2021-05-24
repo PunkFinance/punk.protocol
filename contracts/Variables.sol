@@ -8,6 +8,7 @@ contract Variables is Ownable{
 
     uint256 private _earlyTerminateFee;
     uint256 private _buybackRate;
+    address private _treasury;
     mapping( address => bool ) _emergency;
 
     constructor( address storage_ ) payable {
@@ -36,6 +37,14 @@ contract Variables is Ownable{
 
     function isEmergency( address forge ) public view returns( bool ){
         return _emergency[ forge ];
+    }
+
+    function setTreasury( address treasury_ ) public OnlyAdmin {
+        _treasury = treasury_;
+    }
+
+    function treasury() public view returns( address ){
+        return _treasury;
     }
 
 }

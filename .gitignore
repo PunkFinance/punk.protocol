@@ -9,3 +9,4 @@ package-lock.json
 /contracts/models/TestModel.sol
 /contracts/OnlyTransfer.sol
 /contracts/EarlyContributorVesting.sol
+/contracts/AirdropContract.sol

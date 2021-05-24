@@ -10,8 +10,8 @@ contract ForgeStorage{
     Variables internal _variables;
     address internal _model;
     address internal _token;
-    address internal _treasury;
     uint internal _tokenUnit;
+    
     mapping( address => uint ) internal _tokensBalances;
 
     mapping( address => Saver [] ) _savers;

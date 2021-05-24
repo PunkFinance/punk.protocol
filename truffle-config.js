@@ -28,21 +28,20 @@ module.exports = {
       gasPrice:130000000000,
       skipDryRun: true
     },
-
     ropsten: {
       provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infuraKey}`),
       network_id: 3,
       confirmations: 2,
       timeoutBlocks: 400,
-      gasPrice:130000000000,
+      gasPrice:2000000000,
       skipDryRun: true 
     },
-
     mainnet: {
       provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/v3/${infuraKey}`),
       network_id: 1,       
       confirmations: 1,
-      gasPrice:180000000000,
+      gas:933670,
+      gasPrice:130000000000,
       timeoutBlocks: 400,
       skipDryRun: true 
     },

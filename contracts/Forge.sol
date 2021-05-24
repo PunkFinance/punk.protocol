@@ -20,22 +20,19 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     
     function initializeForge( 
             address storage_, 
-            address variables_, 
-            address treasury_,
+            address variables_,
             string memory name_,
             string memory symbol_,
-            uint8 decimals_,
             address model_, 
             address token_
         ) public initializer {
 
         Ownable.initialize( storage_ );
         _variables      = Variables( variables_ );
-        _treasury       = treasury_;
 
         _name = name_;
         _symbol = symbol_;
-        _decimals = decimals_;
+        _decimals = ERC20( _token ).decimals();
 
         _model          = model_;
         _token          = token_;
@@ -136,7 +133,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         uint buyback = profit.mul( _variables.buybackRate() ).div( 100 );
 
         ModelInterface( modelAddress() ).withdrawTo( ( amount + bonusAmount ).sub( buyback ) , msg.sender );
-        ModelInterface( modelAddress() ).withdrawTo( buyback , _treasury );
+        ModelInterface( modelAddress() ).withdrawTo( buyback , _variables.treasury() );
 
         _savers[ msg.sender ][index].released += amountPlp;
         _savers[msg.sender][index].relAmount += ( amount + bonusAmount ).sub( buyback );
@@ -212,11 +209,4 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
 
     function transactions( address account, uint index ) public view override returns ( Transaction [] memory ){ return _transactions[account][index]; }
 
-    function updateTreaseury( address treasury_ ) public override OnlyAdmin returns( bool ){
-        if( Address.isContract(treasury_) ){
-            _treasury = treasury_;
-            return false;
-        }
-        return true;
-    }
 }

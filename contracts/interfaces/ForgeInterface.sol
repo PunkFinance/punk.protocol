@@ -31,5 +31,4 @@ interface ForgeInterface{
     function getBonus() external view returns( uint );
     function getTotalVolume( ) external view returns( uint );
 
-    function updateTreaseury( address treasury_ ) external returns( bool );
 }
