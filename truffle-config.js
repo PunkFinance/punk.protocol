@@ -23,18 +23,20 @@ module.exports = {
      kovan: {
       provider: () => new HDWalletProvider(mnemonic, `https://kovan.infura.io/v3/${infuraKey}`),
       network_id: 42,          
-      confirmations: 2,    
+      confirmations: 2,
       timeoutBlocks: 400,  
-      gasPrice:130000000000,
+      gasPrice:10000000000,
       skipDryRun: true
     },
     ropsten: {
       provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infuraKey}`),
       network_id: 3,
-      confirmations: 2,
-      timeoutBlocks: 400,
-      gasPrice:2000000000,
-      skipDryRun: true 
+      gas: 5200000,
+      gasPrice: 10000000000,
+      networkCheckTimeout: 10000000,
+      confirmations: 2,    
+      timeoutBlocks: 400,  
+      skipDryRun: true      
     },
     mainnet: {
       provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/v3/${infuraKey}`),

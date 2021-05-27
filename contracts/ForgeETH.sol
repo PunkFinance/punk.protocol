@@ -12,7 +12,8 @@ import "./Saver.sol";
 import "./ForgeStorage.sol";
 import "./libs/Score.sol";
 
-contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
+// Hard Work Now! For Punkers by 0xViktor...
+contract ForgeETH is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
@@ -23,9 +24,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
             address variables_,
             string memory name_,
             string memory symbol_,
-            address model_, 
-            address token_,
-            uint8 decimals_
+            address model_
         ) public initializer {
 
         Ownable.initialize( storage_ );
@@ -35,9 +34,8 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         _symbol         = symbol_;
 
         _model          = model_;
-        _token          = token_;
-        _tokenUnit      = 10**decimals_;
-        _decimals       = decimals_;
+        _tokenUnit      = 10**18;
+        _decimals       = 18;
 
         _count          = 0;
         _totalScore     = 0;
