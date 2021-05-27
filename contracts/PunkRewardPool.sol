@@ -178,4 +178,29 @@ contract PunkRewardPool is Ownable, Initializable{
         return perBlock;
     }
     
+    function getClaimPunk( address to ) public view returns( uint ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        uint reward = 0;
+        for( uint i = 0 ; i < forges.length ; i++ ){
+            reward += getClaimPunk( forges[ i ], to );
+        }
+        return reward;
+    }
+
+    function getClaimPunk( address forge, address to ) public view returns( uint ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        uint checkPointBlock = checkPointBlocks[ forge ][ to ];
+        return _calcRewards( forge, to, checkPointBlock, block.number );
+    }
+
+    function getWeightSum() public view returns( uint ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        return weightSum;
+    }
+
+    function getWeight( address forge ) public view returns( uint ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        return weights[ forge ];
+    }
+    
 }
