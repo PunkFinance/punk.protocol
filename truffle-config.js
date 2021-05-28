@@ -25,6 +25,7 @@ module.exports = {
       network_id: 42,          
       confirmations: 2,
       timeoutBlocks: 400,  
+      networkCheckTimeout: 10000000,
       gasPrice:10000000000,
       skipDryRun: true
     },

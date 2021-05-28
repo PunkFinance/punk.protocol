@@ -44,17 +44,18 @@ contract PunkRewardPool is Ownable, Initializable{
         isInitialize = true;
     }
     
-    function addForge( address forge ) public {
+    function addForge( address forge ) public OnlyAdminOrGovernance {
         // Hard Work Now! For Punkers by 0xViktor...
-        require( !checkForge( forge ), "PUNK_REWARD_POOL: Already Exist" );
+        require( !_checkForge( forge ), "PUNK_REWARD_POOL: Already Exist" );
         forges.push( forge );
         weights[ forge ] = 0;
     }
     
-    function setForge( address forge, uint weight ) public {
+    function setForge( address forge, uint weight ) public OnlyAdminOrGovernance {
         // Hard Work Now! For Punkers by 0xViktor...
-        require( getMinWeight() <= weight && weight <= MAX_WEIGHT, "PUNK_REWARD_POOL: Invalid weight" );
-        require( checkForge( forge ), "PUNK_REWARD_POOL: Not Exist Forge" );
+        require( _checkForge( forge ), "PUNK_REWARD_POOL: Not Exist Forge" );
+        ( uint minWeight , uint maxWeight ) = getWeightRange( forge );
+        require( minWeight <= weight && weight <= maxWeight, "PUNK_REWARD_POOL: Invalid weight" );
         weights[ forge ] = weight;
         
         weightSum = 0;
@@ -67,22 +68,27 @@ contract PunkRewardPool is Ownable, Initializable{
             isStarting = true;
         }
     }
-    
-    function checkForge( address forge ) public view returns( bool ){
+
+    function getWeightRange( address forge ) public view returns( uint, uint ){
         // Hard Work Now! For Punkers by 0xViktor...
-        bool check = false;
-        for( uint  i = 0 ; i < forges.length ; i++ ){
-            if( forges[ i ] == forge ){
-                check = true;
-                break;
+        if( forges.length == 0 ) return ( 1, MAX_WEIGHT );
+        if( forges.length == 1 ) return ( weights[ forges[ 0 ] ], weights[ forges[ 0 ] ] );
+        if( weightSum == 0 ) return ( 0, MAX_WEIGHT );
+        
+        uint highestWeight = 0;
+        uint excludeWeight = weightSum.sub( weights[ forge ] );
+
+        for( uint i = 0 ; i < forges.length ; i++ ){
+            if( forges[ i ] != forge && highestWeight < weights[ forges[ i ] ] ){
+                highestWeight = weights[ forges[ i ] ];
             }
         }
-        return check;
-    }
-    
-    function getMinWeight() public view returns( uint ){
-        // Hard Work Now! For Punkers by 0xViktor...
-        return MAX_WEIGHT.mul( 51 ).div( 49 ).div( forges.length.sub( 1 ) );
+
+        if( highestWeight > excludeWeight.sub( highestWeight ) ){
+            return ( highestWeight.sub( excludeWeight.sub( highestWeight ) ), MAX_WEIGHT < excludeWeight ? MAX_WEIGHT : excludeWeight );
+        }else{
+            return ( 0, MAX_WEIGHT < excludeWeight ? MAX_WEIGHT : excludeWeight );
+        }
     }
 
     function claimPunk( ) public {
@@ -100,16 +106,20 @@ contract PunkRewardPool is Ownable, Initializable{
     function claimPunk( address forge, address to ) public {
         // Hard Work Now! For Punkers by 0xViktor...
         uint checkPointBlock = checkPointBlocks[ forge ][ to ];
-        uint reward = _calcRewards( forge, to, checkPointBlock, block.number );
-        Punk.safeTransfer( to, reward );
-        distributed[ forge ] = distributed[ forge ].add( reward );
-        totalDistributed = totalDistributed.add( reward );
+        if( checkPointBlock > startBlock ){
+            uint reward = _calcRewards( forge, to, checkPointBlock, block.number );
+            checkPointBlocks[ forge ][ to ] = block.number;
+            if( reward > 0 ) Punk.safeTransfer( to, reward );
+            distributed[ forge ] = distributed[ forge ].add( reward );
+            totalDistributed = totalDistributed.add( reward );
+        }
     }
     
     function staking( address forge, uint amount ) public {
         // Hard Work Now! For Punkers by 0xViktor...
         require( weights[ forge ] > 0, "REWARD POOL : FORGE IS NOT READY" );
         claimPunk();
+        checkPointBlocks[ forge ][ msg.sender ] = block.number;
         IERC20( forge ).safeTransferFrom( msg.sender, address( this ), amount );
         balances[ forge ][ msg.sender ] = balances[ forge ][ msg.sender ].add( amount );
         totalSupplies[ forge ] = totalSupplies[ forge ].add( amount );
@@ -119,14 +129,28 @@ contract PunkRewardPool is Ownable, Initializable{
         // Hard Work Now! For Punkers by 0xViktor...
         require( weights[ forge ] > 0, "REWARD POOL : FORGE IS NOT READY" );
         claimPunk();
+        checkPointBlocks[ forge ][ msg.sender ] = block.number;
         balances[ forge ][ msg.sender ] = balances[ forge ][ msg.sender ].sub( amount );
         IERC20( forge ).safeTransfer( msg.sender, amount );
         totalSupplies[ forge ] = totalSupplies[ forge ].sub( amount );
     }
     
+    function _checkForge( address forge ) internal view returns( bool ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        bool check = false;
+        for( uint  i = 0 ; i < forges.length ; i++ ){
+            if( forges[ i ] == forge ){
+                check = true;
+                break;
+            }
+        }
+        return check;
+    }
+    
     function _calcRewards( address forge, address user, uint fromBlock, uint currentBlock ) internal view returns( uint ){
         // Hard Work Now! For Punkers by 0xViktor...
         uint balance = balances[ forge ][ user ];
+        if( balance == 0 ) return 0;
         uint totalSupply = totalSupplies[ forge ];
         uint weight = weights[ forge ];
         
@@ -190,7 +214,7 @@ contract PunkRewardPool is Ownable, Initializable{
     function getClaimPunk( address forge, address to ) public view returns( uint ){
         // Hard Work Now! For Punkers by 0xViktor...
         uint checkPointBlock = checkPointBlocks[ forge ][ to ];
-        return _calcRewards( forge, to, checkPointBlock, block.number );
+        return checkPointBlock > startBlock ? _calcRewards( forge, to, checkPointBlock, block.number ) : 0;
     }
 
     function getWeightSum() public view returns( uint ){
@@ -202,5 +226,25 @@ contract PunkRewardPool is Ownable, Initializable{
         // Hard Work Now! For Punkers by 0xViktor...
         return weights[ forge ];
     }
-    
+
+    function getTotalDistributed( ) public view returns( uint ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        return totalDistributed;
+    }
+
+    function getDistributed( address forge ) public view returns( uint ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        return distributed[ forge ];
+    }
+
+    function getAllocation( ) public view returns( uint ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        return _perBlockRateFromPeriod( _getPeriodFromBlock( block.number ) );
+    }
+
+    function getAllocation( address forge ) public view returns( uint ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        return getAllocation( ).mul( weights[ forge ] ).div( weightSum );
+    }
+
 }
