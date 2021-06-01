@@ -117,21 +117,31 @@ contract PunkRewardPool is Ownable, Initializable{
     
     function staking( address forge, uint amount ) public {
         // Hard Work Now! For Punkers by 0xViktor...
-        require( weights[ forge ] > 0, "REWARD POOL : FORGE IS NOT READY" );
-        claimPunk();
-        checkPointBlocks[ forge ][ msg.sender ] = block.number;
-        IERC20( forge ).safeTransferFrom( msg.sender, address( this ), amount );
-        balances[ forge ][ msg.sender ] = balances[ forge ][ msg.sender ].add( amount );
-        totalSupplies[ forge ] = totalSupplies[ forge ].add( amount );
+        staking( forge, amount, msg.sender );
     }
     
     function unstaking( address forge, uint amount ) public {
         // Hard Work Now! For Punkers by 0xViktor...
+        staking( forge, amount, msg.sender );
+    }
+    
+    function staking( address forge, uint amount, address from ) public {
+        // Hard Work Now! For Punkers by 0xViktor...
         require( weights[ forge ] > 0, "REWARD POOL : FORGE IS NOT READY" );
-        claimPunk();
-        checkPointBlocks[ forge ][ msg.sender ] = block.number;
-        balances[ forge ][ msg.sender ] = balances[ forge ][ msg.sender ].sub( amount );
-        IERC20( forge ).safeTransfer( msg.sender, amount );
+        claimPunk( from );
+        checkPointBlocks[ forge ][ from ] = block.number;
+        IERC20( forge ).safeTransferFrom( from, address( this ), amount );
+        balances[ forge ][ from ] = balances[ forge ][ from ].add( amount );
+        totalSupplies[ forge ] = totalSupplies[ forge ].add( amount );
+    }
+    
+    function unstaking( address forge, uint amount, address from ) public {
+        // Hard Work Now! For Punkers by 0xViktor...
+        require( weights[ forge ] > 0, "REWARD POOL : FORGE IS NOT READY" );
+        claimPunk( from );
+        checkPointBlocks[ forge ][ from ] = block.number;
+        balances[ forge ][ from ] = balances[ forge ][ from ].sub( amount );
+        IERC20( forge ).safeTransfer( from, amount );
         totalSupplies[ forge ] = totalSupplies[ forge ].sub( amount );
     }
     
@@ -247,4 +257,13 @@ contract PunkRewardPool is Ownable, Initializable{
         return getAllocation( ).mul( weights[ forge ] ).div( weightSum );
     }
 
+    function staked( address forge, address account ) public view returns( uint ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        return balances[ forge ][ account ];
+    }
+
+    function getTotalReward() public view returns( uint ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        return Punk.balanceOf( address( this ) ).add( totalDistributed );
+    }
 }

@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/ForgeInterface.sol";
 import "./interfaces/ModelInterface.sol";
+import "./interfaces/PunkRewardPoolInterface.sol";
 import "./Ownable.sol";
 import "./Saver.sol";
 import "./ForgeStorage.sol";
@@ -106,6 +107,10 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         _savers[msg.sender][index].updatedTimestamp = block.timestamp;
 
         emit AddDeposit( msg.sender, index, amount );
+        if( _variables.reward() != address(0) ) {
+            approve( _variables.reward(), mint);
+            PunkRewardPoolInterface( _variables.reward() ).staking( address(this), mint, msg.sender );
+        }
         return true;
     }
     
@@ -127,6 +132,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         uint bonusAmount = bonusPlp.mul( _tokenUnit ).div( getExchangeRate( ) );
         uint amount = amountPlp.mul( _tokenUnit ).div( getExchangeRate( ) );
 
+        if( _variables.reward() != address(0) ) PunkRewardPoolInterface( _variables.reward() ).unstaking(address(this), amountPlp, msg.sender );
         _burn( msg.sender, amountPlp );
         _burn( address( this ), bonusPlp );
 
@@ -160,7 +166,8 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         uint terminateFee = saver( msg.sender, index ).mint.mul( fee ).div( 100 );
         uint returnAmount = saver( msg.sender, index ).mint.sub( terminateFee );
         uint underlyingAmount = returnAmount.mul( _tokenUnit ).div( getExchangeRate( ) );
-
+        
+        if( _variables.reward() != address(0) ) PunkRewardPoolInterface( _variables.reward() ).unstaking(address(this), saver( msg.sender, index ).mint, msg.sender );
         _burn( msg.sender, saver( msg.sender, index ).mint );
         _mint( address( this ), terminateFee );
         ModelInterface( modelAddress() ).withdrawTo( underlyingAmount, msg.sender );
@@ -209,5 +216,9 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     function saver( address account, uint index ) public view override returns( Saver memory ){ return _savers[account][index]; }
 
     function transactions( address account, uint index ) public view override returns ( Transaction [] memory ){ return _transactions[account][index]; }
+
+    function setVariable( address variables_ ) public OnlyAdmin{
+        _variables = Variables( variables_ );
+    }
 
 }

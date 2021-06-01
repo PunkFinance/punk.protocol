@@ -12,12 +12,12 @@ contract OwnableStorage {
     }
 
     function setAdmin( address account ) public {
-        require( isAdmin( msg.sender ), "OWNABLESTORAGE : Not a admin" );
+        require( isAdmin( msg.sender ));
         _admin = account;
     }
 
     function setGovernance( address account ) public {
-        require( isAdmin( msg.sender ) || isGovernance( msg.sender ), "OWNABLESTORAGE : Not a admin or governance" );
+        require( isAdmin( msg.sender ) || isGovernance( msg.sender ));
         _admin = account;
     }
 
