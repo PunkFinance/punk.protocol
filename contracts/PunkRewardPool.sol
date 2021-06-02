@@ -122,7 +122,7 @@ contract PunkRewardPool is Ownable, Initializable{
     
     function unstaking( address forge, uint amount ) public {
         // Hard Work Now! For Punkers by 0xViktor...
-        staking( forge, amount, msg.sender );
+        unstaking( forge, amount, msg.sender );
     }
     
     function staking( address forge, uint amount, address from ) public {
