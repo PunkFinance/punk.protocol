@@ -127,6 +127,7 @@ contract PunkRewardPool is Ownable, Initializable{
     
     function staking( address forge, uint amount, address from ) public {
         // Hard Work Now! For Punkers by 0xViktor...
+        require( msg.sender == from || _checkForge( msg.sender ), "REWARD POOL : NOT ALLOWD" );
         require( weights[ forge ] > 0, "REWARD POOL : FORGE IS NOT READY" );
         claimPunk( from );
         checkPointBlocks[ forge ][ from ] = block.number;
@@ -137,6 +138,7 @@ contract PunkRewardPool is Ownable, Initializable{
     
     function unstaking( address forge, uint amount, address from ) public {
         // Hard Work Now! For Punkers by 0xViktor...
+        require( msg.sender == from || _checkForge( msg.sender ), "REWARD POOL : NOT ALLOWD" );
         require( weights[ forge ] > 0, "REWARD POOL : FORGE IS NOT READY" );
         claimPunk( from );
         checkPointBlocks[ forge ][ from ] = block.number;
