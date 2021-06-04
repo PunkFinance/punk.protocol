@@ -268,4 +268,9 @@ contract PunkRewardPool is Ownable, Initializable{
         // Hard Work Now! For Punkers by 0xViktor...
         return Punk.balanceOf( address( this ) ).add( totalDistributed );
     }
+
+    function getStartBlock() public view returns( uint ){
+        // Hard Work Now! For Punkers by 0xViktor...
+        return startBlock;
+    }
 }
