@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "./interfaces/ForgeInterface.sol";
+import "./interfaces/ForgeEthInterface.sol";
 import "./interfaces/ModelInterface.sol";
 import "./Ownable.sol";
 import "./Saver.sol";
@@ -13,9 +13,8 @@ import "./ForgeStorage.sol";
 import "./libs/Score.sol";
 
 // Hard Work Now! For Punkers by 0xViktor...
-contract ForgeETH is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
+contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ERC20{
     using SafeMath for uint;
-    using SafeERC20 for IERC20;
 
     uint constant SECONDS_DAY = 86400;
     
@@ -45,8 +44,9 @@ contract ForgeETH is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20
         require( Address.isContract( model_));
         
         ModelInterface( _model ).withdrawAllToForge();
-        IERC20( _token ).safeTransfer( model_, IERC20( _token ).balanceOf( address( this ) ) );
-        ModelInterface( model_ ).invest();
+        payable( model_ ).transfer( address(this).balance );
+        ModelInterface( payable( model_ ) ).invest();
+
         _model = model_;
         
         return true;
@@ -64,31 +64,31 @@ contract ForgeETH is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20
     
     function countByAccount( address account ) public view override returns ( uint ){ return _savers[account].length; }
     
-    function craftingSaver( uint amount, uint startTimestamp, uint count, uint interval ) public override returns( bool ){
+    function craftingSaver( uint startTimestamp, uint count, uint interval ) public payable override returns( bool ){
+        uint amount = msg.value;
         require( amount > 0 && count > 0 && interval > 0);
         require( startTimestamp > block.timestamp.add( 24 * 60 * 60 )  );
-
+        
         uint index = countByAccount( msg.sender ) == 0 ? 0 : countByAccount( msg.sender );
-
         _savers[ msg.sender ].push( Saver( block.timestamp, startTimestamp, count, interval, 0, 0, 0, 0, 0, 0, block.timestamp ) );
         _transactions[ msg.sender ][ index ].push( Transaction( true, block.timestamp, 0 ) );
         _count++;
         
         emit CraftingSaver( msg.sender, index, amount );
-        addDeposit(index, amount);
+        addDeposit(index);
         return true;
     }
     
-    function addDeposit( uint index, uint amount ) public override returns( bool ){
+    function addDeposit( uint index ) public payable override returns( bool ){
+        uint amount = msg.value;
         require( saver( msg.sender, index ).startTimestamp > block.timestamp );
         require( saver( msg.sender, index ).status < 2 );
 
         uint mint = amount.mul( getExchangeRate( ) ).div( _tokenUnit );
         _mint( msg.sender, mint );
         
-        IERC20( _token ).safeTransferFrom( msg.sender, address( this ), amount );
-        IERC20( _token ).safeTransfer( _model, amount );
-        ModelInterface( _model ).invest();
+        payable( _model ).transfer( amount );
+        ModelInterface( payable( _model ) ).invest();
 
         uint lastIndex = transactions(msg.sender, index ).length.sub( 1 );
 
@@ -208,4 +208,9 @@ contract ForgeETH is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20
 
     function transactions( address account, uint index ) public view override returns ( Transaction [] memory ){ return _transactions[account][index]; }
 
+    fallback () external payable {
+        payable(msg.sender).transfer(msg.value);
+    }
+    
+    receive() external payable{}
 }

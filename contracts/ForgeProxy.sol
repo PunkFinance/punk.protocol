@@ -23,7 +23,7 @@ contract ForgeProxy is Proxy{
         _;
     }
 
-    function initialize( address implAddress, bytes memory initData, address storage_ ) public isInitializer{
+    function initialize( address storage_, address implAddress ) public isInitializer{
         require(_IMPLEMENTATION_SLOT == bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1));
         require(_OWNABLE_STORAGE_SLOT == bytes32(uint256(keccak256("forge.proxy.ownablestrage")) - 1));
         require(_INITIALIZE_SLOT == bytes32(uint256(keccak256("forge.proxy.initialize")) - 1));
@@ -31,11 +31,6 @@ contract ForgeProxy is Proxy{
         _setImplementation(implAddress);
         _setStorage( storage_ );
         _setInitialize( );
-
-        if(initData.length > 0) {
-            Address.functionDelegateCall(implAddress, initData);
-        }
-
     }
 
     function _setStorage( address storage_ ) internal {
