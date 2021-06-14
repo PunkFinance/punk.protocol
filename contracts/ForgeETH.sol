@@ -157,7 +157,7 @@ contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ER
     
     function terminateSaver( uint index ) public override returns( bool ){
         require( saver( msg.sender, index ).status < 2 );
-        
+
         _savers[msg.sender][index].status = 2;
         
         uint fee = _variables.isEmergency( address( this ) ) ? 0 : _variables.earlyTerminateFee();

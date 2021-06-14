@@ -5,12 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "../interfaces/ModelInterface.sol";
-import "../Ownable.sol";
 import "../ModelStorage.sol";
 import "../3rdDeFiInterfaces/CTokenInterface.sol";
 import "../3rdDeFiInterfaces/IUniswapV2Router.sol";
 
-contract CompoundModel is ModelInterface, ModelStorage, Ownable{
+contract CompoundModel is ModelInterface, ModelStorage{
     using SafeERC20 for IERC20;
     using SafeMath for uint;
 
@@ -22,7 +21,6 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
     address _uRouterV2;
 
     function initialize( 
-        address storage_,
         address forge_, 
         address token_,
         address cToken_, 
@@ -30,7 +28,6 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
         address comptroller_,
         address uRouterV2_ ) public {
 
-            Ownable.initialize(storage_);
             addToken( token_ );
             setForge( forge_ );
             _cToken         = cToken_;
@@ -57,7 +54,7 @@ contract CompoundModel is ModelInterface, ModelStorage, Ownable{
         CTokenInterface( _cToken ).mint( underlyingBalanceInModel() );
     }
     
-    function reInvest() public OnlyAdminOrGovernance{
+    function reInvest() public{
         // Hard Work Now! For Punkers by 0xViktor
         _claimComp();
         _swapCompToUnderlying();
