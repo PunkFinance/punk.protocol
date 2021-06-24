@@ -142,7 +142,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         ModelInterface( modelAddress() ).withdrawTo( ( amount + bonusAmount ).sub( buyback ) , msg.sender );
         ModelInterface( modelAddress() ).withdrawTo( buyback , _variables.treasury() );
 
-        _savers[ msg.sender ][index].released += amountPlp;
+        _savers[msg.sender][index].released += amountPlp;
         _savers[msg.sender][index].relAmount += ( amount + bonusAmount ).sub( buyback );
 
         _transactions[ msg.sender ][index].push( Transaction( false, block.timestamp, amount ) );

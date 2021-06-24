@@ -43,9 +43,27 @@ contract Treasury is Ownable, Initializable {
                 1,
                 path,
                 _grinder,
-                block.timestamp
+                block.timestamp + ( 15 * 60 )
             );
         }
+
+        // For SwapEthForToken
+        address[] memory pathForSwapEth = new address[](2);
+        pathForSwapEth[0] = IUniswapV2Router02(_uRouterV2).WETH();
+        pathForSwapEth[1] = address( _punk );
+
+        IUniswapV2Router02(_uRouterV2).swapExactETHForTokens{value:address(this).balance}(
+            1,
+            pathForSwapEth,
+            _grinder,
+            block.timestamp + ( 15 * 60 )
+        );
     }
+
+    fallback () external payable {
+        payable(msg.sender).transfer(msg.value);
+    }
+    
+    receive() external payable{}
     
 }
