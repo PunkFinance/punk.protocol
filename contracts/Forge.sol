@@ -18,6 +18,8 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     using SafeERC20 for IERC20;
 
     uint constant SECONDS_DAY = 86400;
+
+    constructor() ERC20("PunkFinance","Forge"){}
     
     function initializeForge( 
             address storage_, 
@@ -32,13 +34,13 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         Ownable.initialize( storage_ );
         _variables      = Variables( variables_ );
 
-        _name           = name_;
-        _symbol         = symbol_;
+        __name           = name_;
+        __symbol         = symbol_;
 
         _model          = model_;
         _token          = token_;
         _tokenUnit      = 10**decimals_;
-        _decimals       = decimals_;
+        __decimals      = decimals_;
 
         _count          = 0;
         _totalScore     = 0;
@@ -219,6 +221,19 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
 
     function setVariable( address variables_ ) public OnlyAdmin{
         _variables = Variables( variables_ );
+    }
+
+    // Override ERC20
+    function symbol() public view override returns (string memory) {
+        return symbol();
+    }
+
+    function name() public view override returns (string memory) {
+        return __name;
+    }
+
+    function decimals() public view override returns (uint8) {
+        return __decimals;
     }
 
 }

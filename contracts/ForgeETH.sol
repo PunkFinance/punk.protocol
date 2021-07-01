@@ -18,7 +18,9 @@ contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ER
     using SafeMath for uint;
 
     uint constant SECONDS_DAY = 86400;
-    
+   
+    constructor() ERC20("",""){}
+
     function initializeForge( 
             address storage_, 
             address variables_,
@@ -30,12 +32,12 @@ contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ER
         Ownable.initialize( storage_ );
         _variables      = Variables( variables_ );
 
-        _name           = name_;
-        _symbol         = symbol_;
+        __name           = name_;
+        __symbol         = symbol_;
 
         _model          = model_;
         _tokenUnit      = 10**18;
-        _decimals       = 18;
+        __decimals       = 18;
 
         _count          = 0;
         _totalScore     = 0;
@@ -220,4 +222,17 @@ contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ER
     }
     
     receive() external payable{}
+
+    // Override ERC20
+    function symbol() public view override returns (string memory) {
+        return symbol();
+    }
+
+    function name() public view override returns (string memory) {
+        return __name;
+    }
+
+    function decimals() public view override returns (uint8) {
+        return __decimals;
+    }
 }

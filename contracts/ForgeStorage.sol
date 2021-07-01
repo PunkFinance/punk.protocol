@@ -11,6 +11,11 @@ contract ForgeStorage{
     address internal _model;
     address internal _token;
     uint internal _tokenUnit;
+
+    string internal __name;
+    string internal __symbol;
+    uint8 internal __decimals;
+    
     
     mapping( address => uint ) internal _tokensBalances;
 
