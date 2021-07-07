@@ -1,5 +1,5 @@
 import "@nomiclabs/hardhat-waffle";
-import "@nomiclabs/hardhat-ethers"
+import "@nomiclabs/hardhat-ethers";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
@@ -36,7 +36,9 @@ if (!infuraApiKey) {
   throw new Error("Please set your INFURA_API_KEY in a .env file");
 }
 
-function createTestnetConfig(network: keyof typeof chainIds): NetworkUserConfig {
+function createTestnetConfig(
+  network: keyof typeof chainIds
+): NetworkUserConfig {
   const url: string = "https://" + network + ".infura.io/v3/" + infuraApiKey;
   return {
     accounts: {
@@ -64,6 +66,10 @@ const config: HardhatUserConfig = {
         mnemonic,
       },
       chainId: chainIds.hardhat,
+      forking: {
+        url: String(process.env.RPC_URL),
+        blockNumber: Number(process.env.BLOCK_NUMBER),
+      },
     },
     goerli: createTestnetConfig("goerli"),
     kovan: createTestnetConfig("kovan"),

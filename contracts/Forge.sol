@@ -13,214 +13,336 @@ import "./Saver.sol";
 import "./ForgeStorage.sol";
 import "./libs/Score.sol";
 
-contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
-    using SafeMath for uint;
+contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20 {
+    using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    uint constant SECONDS_DAY = 86400;
+    uint256 constant SECONDS_DAY = 86400;
 
-    constructor() ERC20("PunkFinance","Forge"){}
-    
-    function initializeForge( 
-            address storage_, 
-            address variables_,
-            string memory name_,
-            string memory symbol_,
-            address model_, 
-            address token_,
-            uint8 decimals_
-        ) public initializer {
+    constructor() ERC20("PunkFinance", "Forge") {}
 
-        Ownable.initialize( storage_ );
-        _variables      = Variables( variables_ );
+    function initializeForge(
+        address storage_,
+        address variables_,
+        string memory name_,
+        string memory symbol_,
+        //  address model_,
+        address token_,
+        uint8 decimals_
+    ) public initializer {
+        Ownable.initialize(storage_);
+        _variables = Variables(variables_);
 
-        __name           = name_;
-        __symbol         = symbol_;
+        __name = name_;
+        __symbol = symbol_;
 
-        _model          = model_;
-        _token          = token_;
-        _tokenUnit      = 10**decimals_;
-        __decimals      = decimals_;
+        //  _model          = model_;
+        _token = token_;
+        _tokenUnit = 10**decimals_;
+        __decimals = decimals_;
 
-        _count          = 0;
-        _totalScore     = 0;
+        _count = 0;
+        _totalScore = 0;
     }
-    
-    function setModel( address model_ ) public OnlyAdminOrGovernance returns( bool ){
-        require( Address.isContract( model_));
-        
-        ModelInterface( _model ).withdrawAllToForge();
-        IERC20( _token ).safeTransfer( model_, IERC20( _token ).balanceOf( address( this ) ) );
-        ModelInterface( model_ ).invest();
+
+    function setModel(address model_)
+        public
+        OnlyAdminOrGovernance
+        returns (bool)
+    {
+        require(Address.isContract(model_));
+
+        ModelInterface(_model).withdrawAllToForge();
+        IERC20(_token).safeTransfer(
+            model_,
+            IERC20(_token).balanceOf(address(this))
+        );
+        ModelInterface(model_).invest();
         _model = model_;
-        
+
         return true;
     }
 
-    function withdrawable( address account, uint index ) public view override returns( uint amountPlp ){
-        Saver memory s = saver( account, index );
-        if( s.startTimestamp < block.timestamp ) {
-            uint diff = block.timestamp.sub( s.startTimestamp );
-            uint count = diff.div( SECONDS_DAY.mul( s.interval ) ).add( 1 ); 
+    function withdrawable(address account, uint256 index)
+        public
+        view
+        override
+        returns (uint256 amountPlp)
+    {
+        Saver memory s = saver(account, index);
+        if (s.startTimestamp < block.timestamp) {
+            uint256 diff = block.timestamp.sub(s.startTimestamp);
+            uint256 count = diff.div(SECONDS_DAY.mul(s.interval)).add(1);
             count = count < s.count ? count : s.count;
-            amountPlp = s.status == 2 ? 0 : s.mint.mul( count ).div( s.count ).sub( s.released );
+            amountPlp = s.status == 2
+                ? 0
+                : s.mint.mul(count).div(s.count).sub(s.released);
         }
     }
-    
-    function countByAccount( address account ) public view override returns ( uint ){ return _savers[account].length; }
-    
-    function craftingSaver( uint amount, uint startTimestamp, uint count, uint interval ) public override returns( bool ){
-        require( amount > 0 && count > 0 && interval > 0);
-        require( startTimestamp > block.timestamp.add( 24 * 60 * 60 )  );
 
-        uint index = countByAccount( msg.sender ) == 0 ? 0 : countByAccount( msg.sender );
+    function countByAccount(address account)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        return _savers[account].length;
+    }
 
-        _savers[ msg.sender ].push( Saver( block.timestamp, startTimestamp, count, interval, 0, 0, 0, 0, 0, 0, block.timestamp ) );
-        _transactions[ msg.sender ][ index ].push( Transaction( true, block.timestamp, 0 ) );
+    function craftingSaver(
+        uint256 amount,
+        uint256 startTimestamp,
+        uint256 count,
+        uint256 interval
+    ) public override returns (bool) {
+        require(amount > 0 && count > 0 && interval > 0);
+        require(startTimestamp > block.timestamp.add(24 * 60 * 60));
+
+        uint256 index = countByAccount(msg.sender) == 0
+            ? 0
+            : countByAccount(msg.sender);
+
+        _savers[msg.sender].push(
+            Saver(
+                block.timestamp,
+                startTimestamp,
+                count,
+                interval,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                block.timestamp
+            )
+        );
+        _transactions[msg.sender][index].push(
+            Transaction(true, block.timestamp, 0)
+        );
         _count++;
-        
-        emit CraftingSaver( msg.sender, index, amount );
+
+        emit CraftingSaver(msg.sender, index, amount);
         addDeposit(index, amount);
         return true;
     }
-    
-    function addDeposit( uint index, uint amount ) public override returns( bool ){
-        require( saver( msg.sender, index ).startTimestamp > block.timestamp );
-        require( saver( msg.sender, index ).status < 2 );
 
-        uint mint = amount.mul( getExchangeRate( ) ).div( _tokenUnit );
-        _mint( msg.sender, mint );
-        
-        IERC20( _token ).safeTransferFrom( msg.sender, address( this ), amount );
-        IERC20( _token ).safeTransfer( _model, amount );
-        ModelInterface( _model ).invest();
+    function addDeposit(uint256 index, uint256 amount)
+        public
+        override
+        returns (bool)
+    {
+        require(saver(msg.sender, index).startTimestamp > block.timestamp);
+        require(saver(msg.sender, index).status < 2);
 
-        uint lastIndex = transactions(msg.sender, index ).length.sub( 1 );
+        uint256 mint = amount.mul(getExchangeRate()).div(_tokenUnit);
+        _mint(msg.sender, mint);
 
-        if( block.timestamp.sub( transactions(msg.sender, index )[ lastIndex ].timestamp ) < SECONDS_DAY ){
-            _transactions[msg.sender][ index ][ lastIndex ].amount += amount;
-        }else{
-            _transactions[msg.sender][ index ].push( Transaction( true, block.timestamp, amount ) );
+        IERC20(_token).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(_token).safeTransfer(_model, amount);
+        ModelInterface(_model).invest();
+
+        uint256 lastIndex = transactions(msg.sender, index).length.sub(1);
+
+        if (
+            block.timestamp.sub(
+                transactions(msg.sender, index)[lastIndex].timestamp
+            ) < SECONDS_DAY
+        ) {
+            _transactions[msg.sender][index][lastIndex].amount += amount;
+        } else {
+            _transactions[msg.sender][index].push(
+                Transaction(true, block.timestamp, amount)
+            );
         }
 
-        _updateScore( msg.sender, index );
+        _updateScore(msg.sender, index);
         _savers[msg.sender][index].mint += mint;
         _savers[msg.sender][index].accAmount += amount;
         _savers[msg.sender][index].updatedTimestamp = block.timestamp;
 
-        emit AddDeposit( msg.sender, index, amount );
-        if( _variables.reward() != address(0) ) {
-            approve( _variables.reward(), mint);
-            PunkRewardPoolInterface( _variables.reward() ).staking( address(this), mint, msg.sender );
+        emit AddDeposit(msg.sender, index, amount);
+        if (_variables.reward() != address(0)) {
+            approve(_variables.reward(), mint);
+            PunkRewardPoolInterface(_variables.reward()).staking(
+                address(this),
+                mint,
+                msg.sender
+            );
         }
         return true;
     }
-    
-    function withdraw( uint index, uint amountPlp ) public override returns( bool ){
-        require( saver( msg.sender, index ).status < 2 );
-        
-        Saver memory s = saver( msg.sender, index );
 
-        uint ableAmountPlp = withdrawable( msg.sender, index );
+    function withdraw(uint256 index, uint256 amountPlp)
+        public
+        override
+        returns (bool)
+    {
+        require(saver(msg.sender, index).status < 2);
 
-        require( ableAmountPlp >= amountPlp );
+        Saver memory s = saver(msg.sender, index);
 
-        uint bonusPlp = balanceOf( address( this ) )
-                                .mul( s.score )
-                                .mul( amountPlp )
-                                .div( s.mint )
-                                .div( totalScore() );
+        uint256 ableAmountPlp = withdrawable(msg.sender, index);
 
-        uint bonusAmount = bonusPlp.mul( _tokenUnit ).div( getExchangeRate( ) );
-        uint amount = amountPlp.mul( _tokenUnit ).div( getExchangeRate( ) );
+        require(ableAmountPlp >= amountPlp);
 
-        if( _variables.reward() != address(0) ) PunkRewardPoolInterface( _variables.reward() ).unstaking(address(this), amountPlp, msg.sender );
-        _burn( msg.sender, amountPlp );
-        _burn( address( this ), bonusPlp );
+        uint256 bonusPlp = balanceOf(address(this))
+        .mul(s.score)
+        .mul(amountPlp)
+        .div(s.mint)
+        .div(totalScore());
 
-        uint profit = ( amount + bonusAmount ).sub( s.accAmount.mul( amountPlp ).div( s.mint ) );
-        uint buyback = profit.mul( _variables.buybackRate() ).div( 100 );
+        uint256 bonusAmount = bonusPlp.mul(_tokenUnit).div(getExchangeRate());
+        uint256 amount = amountPlp.mul(_tokenUnit).div(getExchangeRate());
 
-        ModelInterface( modelAddress() ).withdrawTo( ( amount + bonusAmount ).sub( buyback ) , msg.sender );
-        ModelInterface( modelAddress() ).withdrawTo( buyback , _variables.treasury() );
+        if (_variables.reward() != address(0))
+            PunkRewardPoolInterface(_variables.reward()).unstaking(
+                address(this),
+                amountPlp,
+                msg.sender
+            );
+        _burn(msg.sender, amountPlp);
+        _burn(address(this), bonusPlp);
+
+        uint256 profit = (amount + bonusAmount).sub(
+            s.accAmount.mul(amountPlp).div(s.mint)
+        );
+        uint256 buyback = profit.mul(_variables.buybackRate()).div(100);
+
+        ModelInterface(modelAddress()).withdrawTo(
+            (amount + bonusAmount).sub(buyback),
+            msg.sender
+        );
+        ModelInterface(modelAddress()).withdrawTo(
+            buyback,
+            _variables.treasury()
+        );
 
         _savers[msg.sender][index].released += amountPlp;
-        _savers[msg.sender][index].relAmount += ( amount + bonusAmount ).sub( buyback );
+        _savers[msg.sender][index].relAmount += (amount + bonusAmount).sub(
+            buyback
+        );
 
-        _transactions[ msg.sender ][index].push( Transaction( false, block.timestamp, amount ) );
+        _transactions[msg.sender][index].push(
+            Transaction(false, block.timestamp, amount)
+        );
         _savers[msg.sender][index].status = 1;
-        if( saver( msg.sender, index ).mint == saver( msg.sender, index ).released ) {
-            _totalScore = _totalScore.sub( saver( msg.sender, index ).score );
+        if (
+            saver(msg.sender, index).mint == saver(msg.sender, index).released
+        ) {
+            _totalScore = _totalScore.sub(saver(msg.sender, index).score);
             _savers[msg.sender][index].status = 3;
         }
         _savers[msg.sender][index].updatedTimestamp = block.timestamp;
 
-        emit Withdraw( msg.sender, index, ( amount + bonusAmount ).sub( buyback ) );
+        emit Withdraw(msg.sender, index, (amount + bonusAmount).sub(buyback));
         return true;
     }
-    
-    function terminateSaver( uint index ) public override returns( bool ){
-        require( saver( msg.sender, index ).status < 2 );
-        
+
+    function terminateSaver(uint256 index) public override returns (bool) {
+        require(saver(msg.sender, index).status < 2);
+
         _savers[msg.sender][index].status = 2;
-        
-        uint fee = _variables.isEmergency( address( this ) ) ? 0 : _variables.earlyTerminateFee();
-        uint terminateFee = saver( msg.sender, index ).mint.mul( fee ).div( 100 );
-        uint returnAmount = saver( msg.sender, index ).mint.sub( terminateFee );
-        uint underlyingAmount = returnAmount.mul( _tokenUnit ).div( getExchangeRate( ) );
-        
-        if( _variables.reward() != address(0) ) PunkRewardPoolInterface( _variables.reward() ).unstaking(address(this), saver( msg.sender, index ).mint, msg.sender );
-        _burn( msg.sender, saver( msg.sender, index ).mint );
-        _mint( address( this ), terminateFee );
-        ModelInterface( modelAddress() ).withdrawTo( underlyingAmount, msg.sender );
-        
-        _totalScore = _totalScore.sub( saver( msg.sender, index ).score );
-        _transactions[ msg.sender ][index].push( Transaction( false, block.timestamp, returnAmount ) );
-        
+
+        uint256 fee = _variables.isEmergency(address(this))
+            ? 0
+            : _variables.earlyTerminateFee();
+        uint256 terminateFee = saver(msg.sender, index).mint.mul(fee).div(100);
+        uint256 returnAmount = saver(msg.sender, index).mint.sub(terminateFee);
+        uint256 underlyingAmount = returnAmount.mul(_tokenUnit).div(
+            getExchangeRate()
+        );
+
+        if (_variables.reward() != address(0))
+            PunkRewardPoolInterface(_variables.reward()).unstaking(
+                address(this),
+                saver(msg.sender, index).mint,
+                msg.sender
+            );
+        _burn(msg.sender, saver(msg.sender, index).mint);
+        _mint(address(this), terminateFee);
+        ModelInterface(modelAddress()).withdrawTo(underlyingAmount, msg.sender);
+
+        _totalScore = _totalScore.sub(saver(msg.sender, index).score);
+        _transactions[msg.sender][index].push(
+            Transaction(false, block.timestamp, returnAmount)
+        );
+
         _savers[msg.sender][index].updatedTimestamp = block.timestamp;
 
-        emit Terminate( msg.sender, index, underlyingAmount );
-        emit Bonus( msg.sender, index, terminateFee.mul( _tokenUnit ).div( getExchangeRate( ) ) );
+        emit Terminate(msg.sender, index, underlyingAmount);
+        emit Bonus(
+            msg.sender,
+            index,
+            terminateFee.mul(_tokenUnit).div(getExchangeRate())
+        );
         return true;
     }
 
-    function getExchangeRate() public view override returns( uint ){
-        return totalSupply( ) == 0 ? _tokenUnit : _tokenUnit.mul( totalSupply() ).div( ModelInterface(_model ).underlyingBalanceWithInvestment() );
-    }
-
-    function getBonus() public view override returns( uint ){
-        return balanceOf( address( this ) ).mul( _tokenUnit ).div( getExchangeRate( ) );
-    }
-
-    function getTotalVolume() public view override returns( uint ){
-        return ModelInterface(_model ).underlyingBalanceWithInvestment();
-    }
-    
-    function _updateScore( address account, uint index ) internal {
-        uint beforeScore = _savers[account][index].score;
-        _savers[account][ index ].score = Score.calculate(
-                    _savers[account][ index ].createTimestamp, 
-                    _savers[account][ index ].startTimestamp, 
-                    _transactions[account][ index ], 
-                    _savers[account][ index ].count, 
-                    _savers[account][ index ].interval, 
-                    decimals()
+    function getExchangeRate() public view override returns (uint256) {
+        return
+            totalSupply() == 0
+                ? _tokenUnit
+                : _tokenUnit.mul(totalSupply()).div(
+                    ModelInterface(_model).underlyingBalanceWithInvestment()
                 );
-        _totalScore = _totalScore.sub( beforeScore ).add( _savers[account][ index ].score );
     }
-  
-    function modelAddress() public view override returns ( address ){ return _model; }
 
-    function countAll() public view override returns( uint ){ return _count; }
-    
-    function totalScore() public view override returns( uint ){ return _totalScore; }
-    
-    function saver( address account, uint index ) public view override returns( Saver memory ){ return _savers[account][index]; }
+    function getBonus() public view override returns (uint256) {
+        return balanceOf(address(this)).mul(_tokenUnit).div(getExchangeRate());
+    }
 
-    function transactions( address account, uint index ) public view override returns ( Transaction [] memory ){ return _transactions[account][index]; }
+    function getTotalVolume() public view override returns (uint256) {
+        return ModelInterface(_model).underlyingBalanceWithInvestment();
+    }
 
-    function setVariable( address variables_ ) public OnlyAdmin{
-        _variables = Variables( variables_ );
+    function _updateScore(address account, uint256 index) internal {
+        uint256 beforeScore = _savers[account][index].score;
+        _savers[account][index].score = Score.calculate(
+            _savers[account][index].createTimestamp,
+            _savers[account][index].startTimestamp,
+            _transactions[account][index],
+            _savers[account][index].count,
+            _savers[account][index].interval,
+            decimals()
+        );
+        _totalScore = _totalScore.sub(beforeScore).add(
+            _savers[account][index].score
+        );
+    }
+
+    function modelAddress() public view override returns (address) {
+        return _model;
+    }
+
+    function countAll() public view override returns (uint256) {
+        return _count;
+    }
+
+    function totalScore() public view override returns (uint256) {
+        return _totalScore;
+    }
+
+    function saver(address account, uint256 index)
+        public
+        view
+        override
+        returns (Saver memory)
+    {
+        return _savers[account][index];
+    }
+
+    function transactions(address account, uint256 index)
+        public
+        view
+        override
+        returns (Transaction[] memory)
+    {
+        return _transactions[account][index];
+    }
+
+    function setVariable(address variables_) public OnlyAdmin {
+        _variables = Variables(variables_);
     }
 
     // Override ERC20
@@ -235,5 +357,4 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     function decimals() public view override returns (uint8) {
         return __decimals;
     }
-
 }
