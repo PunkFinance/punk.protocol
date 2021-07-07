@@ -17,11 +17,11 @@ contract AaveModel is ModelInterface, ModelStorage, Pausable {
     using SafeMath for uint256;
 
     address constant lendingPool =
-        address(0x8dFf5E27EA6b7AC08EbFdf9eB090F32ee9a30fcf);
+        address(0x7d2768dE32b0b80b7a3454c06BdAc94A69DDc7A9);
     address constant incentivesController =
-        address(0x357D51124f59836DeD84c8a1730D72B749d8BC23);
+        address(0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5);
     address constant dataProvider =
-        address(0x7551b5D2763519d4e37e8B81929D336De671d46d);
+        address(0x057835Ad21a177dbdd3090bB1CAE03EaCF78Fc6d);
 
     event Swap(uint256 aaveAmount, uint256 underlying);
 

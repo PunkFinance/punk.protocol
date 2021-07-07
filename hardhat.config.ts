@@ -68,8 +68,8 @@ const config: HardhatUserConfig = {
       },
       // chainId: chainIds.hardhat,
       forking: {
-        url: String(process.env.RPC_URL),
-        blockNumber: Number(process.env.BLOCK_NUMBER),
+        url: String(process.env.ARCHIVE_NODE),
+        // blockNumber: Number(process.env.BLOCK_NUMBER),
       },
     },
     goerli: createTestnetConfig("goerli"),

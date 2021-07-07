@@ -115,11 +115,11 @@ describe(MODEL, function () {
 
     console.log(forge.address);
 
-    // const model = await deployContractUpgradeable({
-    //   name: "AaveModel",
-    //   from: governance,
-    //   args: [forge.address, underlying, router.uniswap],
-    // });
+    const model = await deployContractUpgradeable({
+      name: "AaveModel",
+      from: governance,
+      args: [forge.address, underlying, router.uniswap],
+    });
   });
 
   it("farmer earns money", async () => {
@@ -127,9 +127,9 @@ describe(MODEL, function () {
       farmer.address
     );
     console.log(farmer.address);
-    // await underlying
-    //   .connect(farmer)
-    //   .approve(forge.address, initialFarmerBalance);
+    await underlying
+      .connect(farmer)
+      .approve(forge.address, initialFarmerBalance);
     // await forge.connect(farmer).deposit(initialFarmerBalance, farmer.address);
     // let oldSharePrice: BigNumber;
     // let newSharePrice: BigNumber;
