@@ -42,15 +42,13 @@ contract AaveModel is ModelInterface, ModelStorage, Pausable {
     function initialize(
         address forge_,
         address token_,
-        address uRouterV2_,
-        uint256 minLeverage_,
-        uint256 borrowDepth_
+        address uRouterV2_
     ) public {
         addToken(token_);
         setForge(forge_);
         _uRouterV2 = uRouterV2_;
-        minLeverage = minLeverage_;
-        borrowDepth = borrowDepth_;
+        minLeverage = 1000;
+        borrowDepth = 6;
 
         (_aToken, , _debtToken) = IAaveProtocolDataProvider(dataProvider)
         .getReserveTokensAddresses(token_);

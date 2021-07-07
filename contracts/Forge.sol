@@ -3,8 +3,9 @@ pragma solidity >=0.5.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+// import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./interfaces/ForgeInterface.sol";
 import "./interfaces/ModelInterface.sol";
 import "./interfaces/PunkRewardPoolInterface.sol";
@@ -13,28 +14,36 @@ import "./Saver.sol";
 import "./ForgeStorage.sol";
 import "./libs/Score.sol";
 
-contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20 {
+contract Forge is
+    ForgeInterface,
+    ForgeStorage,
+    Ownable,
+    Initializable,
+    ERC20Upgradeable
+{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     uint256 constant SECONDS_DAY = 86400;
 
-    constructor() ERC20("PunkFinance", "Forge") {}
+    // constructor() ERC20("PunkFinance", "Forge") {}
 
     function initializeForge(
         address storage_,
         address variables_,
         string memory name_,
         string memory symbol_,
-        //  address model_,
+        //  address model_, I can't initialize a model without
         address token_,
         uint8 decimals_
     ) public initializer {
         Ownable.initialize(storage_);
+
         _variables = Variables(variables_);
 
         __name = name_;
         __symbol = symbol_;
+        ERC20Upgradeable.__ERC20_init(__name, __symbol);
 
         //  _model          = model_;
         _token = token_;
