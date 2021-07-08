@@ -1,9 +1,12 @@
+import { unitFixtureForge } from "../../shared/fixtures"
 import { shouldBehaveLikeForge } from "./Forge.behavior"
 
 export function unitTestForge(): void {
     describe("Forge", function() {
         beforeEach(async function() {
-            shouldBehaveLikeForge()
+            const forge = await this.loadFixture(unitFixtureForge)
+            this.contracts.forge = forge;
         })
+        shouldBehaveLikeForge()
     })
 }
