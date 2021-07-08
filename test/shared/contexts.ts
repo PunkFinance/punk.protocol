@@ -17,12 +17,12 @@ export function baseContext(description: string, hooks: () => void): void {
       this.signers = {} as Signers;
 
       const signers: SignerWithAddress[] = await ethers.getSigners();
-      this.signers.admin = signers[0];
-      this.signers.borrower = signers[1];
-      this.signers.lender = signers[2];
-      this.signers.liquidator = signers[3];
-      this.signers.maker = signers[4];
-      this.signers.raider = signers[5];
+      this.signers.account0 = signers[0];
+      this.signers.account1 = signers[1];
+      this.signers.account2 = signers[2];
+      this.signers.account3 = signers[3];
+      this.signers.account4 = signers[4];
+      this.signers.account5 = signers[5];
 
       // Get rid of this when https://github.com/nomiclabs/hardhat/issues/849 gets fixed.
       this.loadFixture = createFixtureLoader(signers as Signer[] as Wallet[]);
