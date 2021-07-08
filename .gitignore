@@ -6,8 +6,8 @@ package-lock.json
 /build
 /node_modules/*
 !/node_modules/@openzeppelin
-/contracts/models/TestModel.sol
-/contracts/models/TestETHModel.sol
+# /contracts/models/TestModel.sol
+# /contracts/models/TestETHModel.sol
 /contracts/OnlyTransfer.sol
 /contracts/EarlyContributorVesting.sol
 /contracts/AirdropContract.sol
