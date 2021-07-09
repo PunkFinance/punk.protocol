@@ -63,6 +63,9 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic,
       },
+      forking: {
+        url: "https://eth-mainnet.alchemyapi.io/v2/Sasfx5mhbe9nZTI86nuY_8OD7rV5O6Tq"
+      },
       chainId: chainIds.hardhat,
     },
     goerli: createTestnetConfig("goerli"),

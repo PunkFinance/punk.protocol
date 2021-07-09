@@ -18,7 +18,6 @@ export async function libraryFixtures(): Promise<Contract> {
     return score
 }
 
-
 export async function unitFixtureForge(): Promise<Contract> {
     const score = await libraryFixtures();
     const Forge = await ethers.getContractFactory("Forge", {
@@ -29,4 +28,12 @@ export async function unitFixtureForge(): Promise<Contract> {
     const forge = await Forge.deploy()
     await forge.deployed();
     return forge;
+}
+
+export async function unitFixtureVariables(): Promise<Contract> {
+    const Variables = await ethers.getContractFactory("Variables")
+    const variables = await Variables.deploy()
+    await variables.deployed()
+
+    return variables
 }
