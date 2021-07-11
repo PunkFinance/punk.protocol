@@ -52,8 +52,9 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         ModelInterface( _model ).withdrawAllToForge();
         IERC20( _token ).safeTransfer( model_, IERC20( _token ).balanceOf( address( this ) ) );
         ModelInterface( model_ ).invest();
-        _model = model_;
         
+        emit SetModel(_model, model_);
+        _model = model_;
         return true;
     }
 
