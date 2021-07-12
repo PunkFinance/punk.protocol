@@ -11,6 +11,7 @@ interface ForgeEthInterface{
     event Withdraw ( address owner, uint index, uint amount );
     event Terminate ( address owner, uint index, uint amount );
     event Bonus ( address owner, uint index, uint amount );
+    event SetModel ( address from, address to );
 
     function modelAddress() external view returns (address);
 

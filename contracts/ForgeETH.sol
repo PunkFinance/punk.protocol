@@ -50,8 +50,8 @@ contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ER
         payable( model_ ).transfer( address(this).balance );
         ModelInterface( payable( model_ ) ).invest();
 
+        emit SetModel(_model, model_);
         _model = model_;
-        
         return true;
     }
 
