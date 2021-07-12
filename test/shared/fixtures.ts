@@ -1,5 +1,5 @@
 import { Signer } from "@ethersproject/abstract-signer"
-import { Contract } from "ethers";
+import { Contract, Wallet } from "ethers";
 import { artifacts, ethers, waffle } from "hardhat"
 
 export async function libraryFixtures(): Promise<Contract> {
@@ -30,10 +30,17 @@ export async function unitFixtureForge(): Promise<Contract> {
     return forge;
 }
 
-export async function unitFixtureVariables(): Promise<Contract> {
+export async function unitFixtureVariables([owner] : Wallet[]): Promise<Contract> {
     const Variables = await ethers.getContractFactory("Variables")
-    const variables = await Variables.deploy()
+    const variables = await Variables.deploy(owner.address)
     await variables.deployed()
 
     return variables
+}
+
+export async function unitFixtureCompoundModel(): Promise<Contract> {
+    const CompoundModel = await ethers.getContractFactory("CompoundModel")
+    const compoundModel = await CompoundModel.deploy()
+    await compoundModel.deployed()
+    return compoundModel
 }
