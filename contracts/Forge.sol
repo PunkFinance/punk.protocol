@@ -50,8 +50,8 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         require( Address.isContract( model_));
         
         ModelInterface( _model ).withdrawAllToForge();
-        IERC20( _token ).safeTransfer( model_, IERC20( _token ).balanceOf( address( this ) ) );
-        ModelInterface( model_ ).invest();
+        // IERC20( _token ).safeTransfer( model_, IERC20( _token ).balanceOf( address( this ) ) );
+        // ModelInterface( model_ ).invest();
         
         emit SetModel(_model, model_);
         _model = model_;

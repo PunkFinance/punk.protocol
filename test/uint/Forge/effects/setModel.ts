@@ -23,9 +23,9 @@ export default function shouldBehaveLikeSetModel(): void {
         })
 
         it("setModel with admin address", async function() {
-            // await expect(this.contracts.forge.connect(this.signers.owner).setModel(this.contracts.forge.address))
-            //     .to.emit(this.contracts.forge, 'SetModel')
-            //     .withArgs(this.contracts.compoundModel.address, this.contracts.compoundModel.address)
+            await expect(this.contracts.forge.connect(this.signers.owner).setModel(this.contracts.compoundModel.address))
+                .to.emit(this.contracts.forge, 'SetModel')
+                .withArgs(this.contracts.compoundModel.address, this.contracts.compoundModel.address)
         })
     })
 }

@@ -1,7 +1,8 @@
 export enum CompoundAddresses {
     cETH = "0x4ddc2d193948926d02f9b1fe9e1daa0718270ed5",
     Comptroller = "0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b",
-    COMP = "0xc00e94cb662c3520282e6f5717214004a7f26888"
+    COMP = "0xc00e94cb662c3520282e6f5717214004a7f26888",
+    cDai = "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643"
 }
 
 export enum UniswapAddresses {

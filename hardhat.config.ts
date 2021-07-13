@@ -67,6 +67,8 @@ const config: HardhatUserConfig = {
       forking: {
         url: "https://eth-mainnet.alchemyapi.io/v2/Sasfx5mhbe9nZTI86nuY_8OD7rV5O6Tq"
       },
+      // gasPrice: 800000000000,
+      // blockGasLimit: 1245000000,
       chainId: chainIds.hardhat,
     },
     goerli: createTestnetConfig("goerli"),
@@ -101,7 +103,7 @@ const config: HardhatUserConfig = {
     target: "ethers-v5",
   },
   mocha: {
-    timeout: 100000
+    timeout: 10000000
   }
 };
 

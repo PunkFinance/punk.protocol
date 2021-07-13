@@ -29,7 +29,7 @@ export default function shouldBehaveLikeCraftingSaver(): void {
             const saverIndex = await this.contracts.forge.connect(this.signers.accountDai).countByAccount(this.signers.accountDai.address)
             await expect(this.contracts.forge.connect(this.signers.accountDai).craftingSaver(10000, startTimestamp, 100, 1000))
             .to.emit(this.contracts.forge, 'CraftingSaver')
-            .withArgs(this.signers.accountDai.address, saverIndex, 100)
+            .withArgs(this.signers.accountDai.address, saverIndex, 10000)
         })
     })
 }
