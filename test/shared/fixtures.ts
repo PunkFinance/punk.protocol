@@ -1,6 +1,7 @@
 import { Signer } from "@ethersproject/abstract-signer"
 import { Contract, Wallet } from "ethers";
 import { artifacts, ethers, waffle } from "hardhat"
+import { Tokens, UniswapAddresses } from "./mockInfo";
 
 export async function libraryFixtures(): Promise<Contract> {
     const CommitmentWeight = await ethers.getContractFactory("CommitmentWeight")
@@ -43,4 +44,16 @@ export async function unitFixtureCompoundModel(): Promise<Contract> {
     const compoundModel = await CompoundModel.deploy()
     await compoundModel.deployed()
     return compoundModel
+}
+
+export async function unitFixtureUniswapV2(): Promise<Contract> {
+    const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router02");
+    const uniswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, UniswapAddresses.UniswapV2Router02);
+    return uniswapRouter
+}
+
+export async function unitFixtureDaiToken(): Promise<Contract> {
+    const IDaiToken = await artifacts.readArtifact("IERC20")
+    const daiToken = await ethers.getContractAt(IDaiToken.abi, Tokens.Dai)
+    return daiToken
 }

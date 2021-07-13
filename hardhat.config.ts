@@ -12,6 +12,7 @@ import { resolve } from "path";
 import { config as dotenvConfig } from "dotenv";
 import { HardhatUserConfig } from "hardhat/config";
 import { NetworkUserConfig } from "hardhat/types";
+import "tsconfig-paths/register";
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
 

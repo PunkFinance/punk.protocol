@@ -9,30 +9,10 @@ const symbol = "TSB"
 
 export default function shouldBehaveLikeSetModel(): void {
     context("when setModel called with contract address", function() {
-        beforeEach(async function() {
-            await this.contracts.compoundModel.initialize(
-                this.contracts.forge.address,
-                Tokens.Dai,
-                CompoundAddresses.cETH,
-                CompoundAddresses.COMP,
-                CompoundAddresses.Comptroller,
-                UniswapAddresses.UniswapV2Router02
-            )
-            await this.contracts.forge.initializeForge(
-                this.signers.owner.address,
-                this.contracts.variables.address,
-                name,
-                symbol,
-                this.contracts.compoundModel.address,
-                Tokens.Dai,
-                18
-            )
-
-        })
         
         it("setModel with non-contract address", async function() {
             await expect(
-                this.contracts.forge.connect(this.signers.owner).setModel(this.signers.account0.address),
+                this.contracts.forge.connect(this.signers.owner).setModel(this.signers.account1.address),
             ).to.be.reverted
         })
 
@@ -43,9 +23,9 @@ export default function shouldBehaveLikeSetModel(): void {
         })
 
         it("setModel with admin address", async function() {
-            // await expect(
-            //     this.contracts.forge.connect(this.signers.owner).callStatic.setModel(this.contracts.compoundModel.address)
-            // ).to.be.true
+            // await expect(this.contracts.forge.connect(this.signers.owner).setModel(this.contracts.forge.address))
+            //     .to.emit(this.contracts.forge, 'SetModel')
+            //     .withArgs(this.contracts.compoundModel.address, this.contracts.compoundModel.address)
         })
     })
 }

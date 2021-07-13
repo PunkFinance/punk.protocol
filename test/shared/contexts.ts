@@ -18,7 +18,7 @@ export function baseContext(description: string, hooks: () => void): void {
 
       const signers: SignerWithAddress[] = await ethers.getSigners();
       this.signers.owner = signers[5];
-      this.signers.account0 = signers[0];
+      this.signers.accountDai = signers[0];
       this.signers.account1 = signers[1];
       this.signers.account2 = signers[2];
       this.signers.account3 = signers[3];
