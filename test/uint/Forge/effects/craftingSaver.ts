@@ -21,7 +21,7 @@ export default function shouldBehaveLikeCraftingSaver(): void {
             await expect(this.contracts.forge.craftingSaver(100, blockInfo.timestamp, 100, 1000)).to.be.reverted
         })
 
-        it('should save', async function () {
+        it('should save craft works', async function () {
             const blockNumber = await ethers.provider.getBlockNumber()
             const blockInfo = await ethers.provider.getBlock(blockNumber)
             await this.contracts.daiContract.connect(this.signers.accountDai).approve(this.contracts.forge.address, 10000)

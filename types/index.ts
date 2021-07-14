@@ -8,26 +8,13 @@ export interface Contracts {
     forge: Forge;
     forgeEth: ForgeEth,
 }
-
-export interface Mocks {
-    balanceSheet: MockContract;
-    fintroller: MockContract;
-    hTokens: MockContract[];
-    oracle: MockContract;
-    usdc: MockContract;
-    usdcPriceFeed: MockContract;
-    wbtc: MockContract;
-    wbtcPriceFeed: MockContract;
-    weth: MockContract;
-    wethPriceFeed: MockContract;
-  }
   
   export interface Signers {
-    admin: SignerWithAddress;
-    borrower: SignerWithAddress;
-    lender: SignerWithAddress;
-    liquidator: SignerWithAddress;
-    maker: SignerWithAddress;
-    raider: SignerWithAddress;
+    owner: SignerWithAddress;
+    accountDai: SignerWithAddress;
+    account1: SignerWithAddress;
+    account2: SignerWithAddress;
+    account3: SignerWithAddress;
+    account4: SignerWithAddress;
   }
   
