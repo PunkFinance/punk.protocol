@@ -13,6 +13,7 @@ import { resolve } from "path";
 import { config as dotenvConfig } from "dotenv";
 import { HardhatUserConfig } from "hardhat/config";
 import { NetworkUserConfig } from "hardhat/types";
+import "tsconfig-paths/register";
 
 dotenvConfig({ path: resolve(__dirname, "./.env") });
 
@@ -66,11 +67,12 @@ const config: HardhatUserConfig = {
       accounts: {
         mnemonic,
       },
-      // chainId: chainIds.hardhat,
       forking: {
-        url: String(process.env.ARCHIVE_NODE),
-        // blockNumber: Number(process.env.BLOCK_NUMBER),
+        url: "https://eth-mainnet.alchemyapi.io/v2/Sasfx5mhbe9nZTI86nuY_8OD7rV5O6Tq",
       },
+      // gasPrice: 800000000000,
+      // blockGasLimit: 1245000000,
+      chainId: chainIds.hardhat,
     },
     goerli: createTestnetConfig("goerli"),
     kovan: createTestnetConfig("kovan"),
@@ -102,6 +104,9 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: "typechain",
     target: "ethers-v5",
+  },
+  mocha: {
+    timeout: 10000000,
   },
 };
 
