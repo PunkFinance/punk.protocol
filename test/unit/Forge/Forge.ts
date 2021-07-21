@@ -40,7 +40,7 @@ export function unitTestForge(): void {
                 18
             )
         })
-        shouldBehaveLikeForge()
+        // shouldBehaveLikeForge()
         shouldBehaveLikeCraftingSaver()
     })
 }

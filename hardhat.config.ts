@@ -3,6 +3,7 @@ import "@nomiclabs/hardhat-ethers"
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import "hardhat-watcher";
 
 import "./tasks/accounts";
 import "./tasks/clean";
@@ -104,6 +105,15 @@ const config: HardhatUserConfig = {
   },
   mocha: {
     timeout: 10000000
+  },
+  watcher: {
+    compilation: {
+      tasks: ["compile"]
+    },
+    testing: {
+      tasks: ["test"],
+      files: ["./test"]
+    }
   }
 };
 
