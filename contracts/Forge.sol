@@ -93,8 +93,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         uint mint = amount.mul( getExchangeRate( ) ).div( _tokenUnit );
         _mint( msg.sender, mint );
         
-        IERC20( _token ).safeTransferFrom( msg.sender, address( this ), amount );
-        IERC20( _token ).safeTransfer( _model, amount );
+        IERC20( _token ).safeTransferFrom( msg.sender, _model, amount );
         ModelInterface( _model ).invest();
 
         uint lastIndex = transactions(msg.sender, index ).length.sub( 1 );
