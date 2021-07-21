@@ -67,7 +67,13 @@ export default function shouldBehaveLikeCraftingSaver(): void {
 
         it('check terminateSaver', async function() {
             await this.contracts.forge.connect(this.signers.accountDai).terminateSaver(0)
+            await expect(this.contracts.forge.connect(this.signers.accountDai).terminateSaver(0)).to.be.reverted
+            await expect(this.contracts.forge.connect(this.signers.accountDai).withdraw(0, 100)).to.be.reverted
+            await expect(this.contracts.forge.connect(this.signers.accountDai).addDeposit(0, 100)).to.be.reverted
         })
 
+        it('check score model', async function() {
+            
+        })
     })
 }
