@@ -24,9 +24,11 @@ library Score {
         xAxis = new uint [] ( transactions.length + 1 );
         
         for( uint i = 0 ; i <  transactions.length ; i++ ){
-            yAxis[ depositCount ] = i == 0 ? transactions[ i ].amount : transactions[ i ].amount.add( yAxis[ i - 1 ] );
-            xAxis[ depositCount ] = transactions[ i ].timestamp.sub( createTimestamp );
-            depositCount++;
+            if( transactions[i].pos ) {
+                yAxis[ depositCount ] = i == 0 ? transactions[ i ].amount : transactions[ i ].amount.add( yAxis[ i - 1 ] );
+                xAxis[ depositCount ] = transactions[ i ].timestamp.sub( createTimestamp );
+                depositCount++;
+            }
         }
         xAxis[ depositCount ] = deposit;
         
