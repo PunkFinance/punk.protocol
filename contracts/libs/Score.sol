@@ -24,11 +24,9 @@ library Score {
         xAxis = new uint [] ( transactions.length + 1 );
         
         for( uint i = 0 ; i <  transactions.length ; i++ ){
-            if( transactions[i].pos ) {
-                yAxis[ depositCount ] = i == 0 ? transactions[ i ].amount : transactions[ i ].amount.add( yAxis[ i - 1 ] );
-                xAxis[ depositCount ] = transactions[ i ].timestamp.sub( createTimestamp );
-                depositCount++;
-            }
+            yAxis[ depositCount ] = i == 0 ? transactions[ i ].amount : transactions[ i ].amount.add( yAxis[ i - 1 ] );
+            xAxis[ depositCount ] = transactions[ i ].timestamp.sub( createTimestamp );
+            depositCount++;
         }
         xAxis[ depositCount ] = deposit;
         
@@ -92,7 +90,7 @@ library Score {
             
             uint afterWithdraw = yAxis[ depositCount - 1 ].mul( withdraw ).div( 2 );
             
-            return beforeWithdraw.add( afterWithdraw ).mul( cw ).div( 10 ** decimals );
+            return beforeWithdraw.add( afterWithdraw ).div( SECONDS_OF_DAY ).mul( cw ).div( 10 ** decimals );
             
         }
         
