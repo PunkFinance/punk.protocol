@@ -14,7 +14,7 @@ contract Variables is Ownable{
 
     constructor( address storage_ ) payable {
         Ownable.initialize(storage_);
-        _earlyTerminateFee = 2;
+        _earlyTerminateFee = 1;
         _buybackRate = 20;
     }
 

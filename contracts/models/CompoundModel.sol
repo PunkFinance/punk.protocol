@@ -4,6 +4,7 @@ pragma solidity >=0.5.0 <0.9.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "hardhat/console.sol";
 import "../interfaces/ModelInterface.sol";
 import "../ModelStorage.sol";
 import "../3rdDeFiInterfaces/CTokenInterface.sol";
@@ -49,7 +50,6 @@ contract CompoundModel is ModelInterface, ModelStorage{
     function invest() public override {
         // Hard Work Now! For Punkers by 0xViktor
         IERC20( token( 0 ) ).safeApprove( _cToken, underlyingBalanceInModel() );
-
         emit Invest( underlyingBalanceInModel(), block.timestamp );
         CTokenInterface( _cToken ).mint( underlyingBalanceInModel() );
     }

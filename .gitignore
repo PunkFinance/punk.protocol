@@ -1,13 +1,24 @@
-.env
-.DS_Store
-package-lock.json
-/migrations
-/test
-/build
-/node_modules/*
-!/node_modules/@openzeppelin
-# /contracts/models/TestModel.sol
-# /contracts/models/TestETHModel.sol
-/contracts/OnlyTransfer.sol
-/contracts/EarlyContributorVesting.sol
-/contracts/AirdropContract.sol
+# folders
+.coverage_artifacts/
+.coverage_cache/
+.coverage_contracts/
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+artifacts/
+build/
+cache/
+coverage/
+dist/
+lib/
+node_modules/
+typechain/
+
+# files
+*.env
+*.log
+*.tsbuildinfo
+coverage.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

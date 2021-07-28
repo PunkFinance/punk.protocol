@@ -2,6 +2,7 @@
 pragma solidity >=0.5.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
+import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -50,8 +51,6 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         require( Address.isContract( model_));
         
         ModelInterface( _model ).withdrawAllToForge();
-        IERC20( _token ).safeTransfer( model_, IERC20( _token ).balanceOf( address( this ) ) );
-        ModelInterface( model_ ).invest();
         
         emit SetModel(_model, model_);
         _model = model_;
@@ -123,7 +122,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
 
         uint ableAmountPlp = withdrawable( msg.sender, index );
 
-        require( ableAmountPlp >= amountPlp );
+        require( ableAmountPlp >= amountPlp, "Withdraw amount is big!" );
 
         uint bonusPlp = balanceOf( address( this ) )
                                 .mul( s.score )
@@ -170,7 +169,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         uint underlyingAmount = returnAmount.mul( _tokenUnit ).div( getExchangeRate( ) );
         
         if( _variables.reward() != address(0) ) PunkRewardPoolInterface( _variables.reward() ).unstaking(address(this), saver( msg.sender, index ).mint, msg.sender );
-        _burn( msg.sender, saver( msg.sender, index ).mint );
+        _burn( msg.sender, saver( msg.sender, index ).mint - saver( msg.sender, index ).released );
         _mint( address( this ), terminateFee );
         ModelInterface( modelAddress() ).withdrawTo( underlyingAmount, msg.sender );
         
