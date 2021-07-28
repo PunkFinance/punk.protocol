@@ -38,10 +38,10 @@ export function unitTestScore(): void {
                     transactions,
                     count,
                     interval,
-                    18
+                    8
                 )
                 
-                await expect(scoreResult).to.be.equal(480)
+                await expect(scoreResult).to.be.equal(5565966547687500)
             })
         })
     })
