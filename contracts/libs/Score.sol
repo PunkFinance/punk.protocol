@@ -92,7 +92,7 @@ library Score {
             
             uint afterWithdraw = yAxis[ depositCount - 1 ].mul( withdraw ).div( 2 );
             
-            return beforeWithdraw.add( afterWithdraw ).mul( cw ).div( 10 ** decimals );
+            return beforeWithdraw.add( afterWithdraw ).div( SECONDS_OF_DAY ).mul( cw ).div( 10 ** decimals );
             
         }
         
