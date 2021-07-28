@@ -64,3 +64,15 @@ export async function unitFixtureOwnableStorage([,,,,,owner] : Wallet[]): Promis
     await ownableStorage.deployed()
     return ownableStorage
 }
+
+export async function unitFixtureScoreMock(): Promise<Contract> {
+    const score = await libraryFixtures();
+    const ScoreMock = await ethers.getContractFactory("ScoreMock", {
+        libraries: {
+            Score: score.address,
+        }
+    });
+    const scoreMock = await ScoreMock.deploy()
+
+    return scoreMock
+}
