@@ -41,7 +41,7 @@ export function unitTestScore(): void {
                     8
                 )
                 
-                await expect(scoreResult).to.be.equal(5565966547687500)
+                await expect(scoreResult).to.be.equal(55659665)
             })
         })
     })
