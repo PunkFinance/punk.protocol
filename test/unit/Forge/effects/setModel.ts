@@ -1,11 +1,4 @@
-import { BigNumber } from "@ethersproject/bignumber"
-import { Zero } from "@ethersproject/constants"
 import { expect } from "chai"
-
-import { ForgeErrors } from '../../../shared/errors'
-import { Tokens, CompoundAddresses, UniswapAddresses } from '../../../shared/mockInfo'
-const name = "test"
-const symbol = "TSB"
 
 export default function shouldBehaveLikeSetModel(): void {
     context("when setModel called with contract address", function() {

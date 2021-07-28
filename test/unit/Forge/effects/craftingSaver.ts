@@ -1,4 +1,4 @@
-import { expect, use } from "chai"
+import { expect } from "chai"
 import { ethers, network } from "hardhat";
 import { Tokens } from "../../../shared/mockInfo";
 import { ethToWei } from '../../../shared/utils'

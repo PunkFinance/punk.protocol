@@ -1,5 +1,4 @@
 import { unitFixtureCompoundModel, unitFixtureDaiToken, unitFixtureForge, unitFixtureOwnableStorage, unitFixtureUniswapV2, unitFixtureVariables } from "../../shared/fixtures"
-import { shouldBehaveLikeForge } from "./Forge.behavior"
 import { Tokens, CompoundAddresses, UniswapAddresses } from '../../shared/mockInfo'
 import shouldBehaveLikeCraftingSaver from "./effects/craftingSaver"
 

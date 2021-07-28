@@ -1,4 +1,3 @@
-import { Signer } from "@ethersproject/abstract-signer"
 import { Contract, Wallet } from "ethers";
 import { artifacts, ethers, waffle } from "hardhat"
 import { Tokens, UniswapAddresses } from "./mockInfo";
