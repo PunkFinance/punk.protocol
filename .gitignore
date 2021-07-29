@@ -26,4 +26,4 @@ yarn.lock
 contracts/ForgeETH.sol
 contracts/models/TestModel.sol
 contracts/models/TestETHModel.sol
-contracts/ForgeETH.sol
+package-lock.json
