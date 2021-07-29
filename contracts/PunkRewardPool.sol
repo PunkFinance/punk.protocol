@@ -43,6 +43,11 @@ contract PunkRewardPool is Ownable, Initializable{
 
         isInitialize = true;
     }
+
+    function start() public OnlyAdmin{
+        startBlock = block.number;
+        isStarting = true;
+    }
     
     function addForge( address forge ) public OnlyAdminOrGovernance {
         // Hard Work Now! For Punkers by 0xViktor...
@@ -63,10 +68,6 @@ contract PunkRewardPool is Ownable, Initializable{
             weightSum += weights[ forges[ i ] ];
         }
 
-        if( !isStarting && weightSum > 0 && forges.length > 0 ){
-            startBlock = block.number;
-            isStarting = true;
-        }
     }
 
     function getWeightRange( address forge ) public view returns( uint, uint ){
@@ -105,9 +106,8 @@ contract PunkRewardPool is Ownable, Initializable{
 
     function claimPunk( address forge, address to ) public {
         // Hard Work Now! For Punkers by 0xViktor...
-        uint checkPointBlock = checkPointBlocks[ forge ][ to ];
-        if( checkPointBlock > startBlock ){
-            uint reward = _calcRewards( forge, to, checkPointBlock, block.number );
+        if( isStarting ){
+            uint reward = getClaimPunk( forge, to );
             checkPointBlocks[ forge ][ to ] = block.number;
             if( reward > 0 ) Punk.safeTransfer( to, reward );
             distributed[ forge ] = distributed[ forge ].add( reward );
@@ -128,7 +128,6 @@ contract PunkRewardPool is Ownable, Initializable{
     function staking( address forge, uint amount, address from ) public {
         // Hard Work Now! For Punkers by 0xViktor...
         require( msg.sender == from || _checkForge( msg.sender ), "REWARD POOL : NOT ALLOWD" );
-        require( weights[ forge ] > 0, "REWARD POOL : FORGE IS NOT READY" );
         claimPunk( from );
         checkPointBlocks[ forge ][ from ] = block.number;
         IERC20( forge ).safeTransferFrom( from, address( this ), amount );
@@ -139,7 +138,6 @@ contract PunkRewardPool is Ownable, Initializable{
     function unstaking( address forge, uint amount, address from ) public {
         // Hard Work Now! For Punkers by 0xViktor...
         require( msg.sender == from || _checkForge( msg.sender ), "REWARD POOL : NOT ALLOWD" );
-        require( weights[ forge ] > 0, "REWARD POOL : FORGE IS NOT READY" );
         claimPunk( from );
         checkPointBlocks[ forge ][ from ] = block.number;
         balances[ forge ][ from ] = balances[ forge ][ from ].sub( amount );
@@ -226,6 +224,9 @@ contract PunkRewardPool is Ownable, Initializable{
     function getClaimPunk( address forge, address to ) public view returns( uint ){
         // Hard Work Now! For Punkers by 0xViktor...
         uint checkPointBlock = checkPointBlocks[ forge ][ to ];
+        if( checkPointBlock <= getStartBlock() ){
+            checkPointBlock = getStartBlock();
+        }
         return checkPointBlock > startBlock ? _calcRewards( forge, to, checkPointBlock, block.number ) : 0;
     }
 

@@ -1,3 +1,4 @@
+import { Signer } from "@ethersproject/abstract-signer"
 import { Contract, Wallet } from "ethers";
 import { artifacts, ethers, waffle } from "hardhat"
 import { Tokens, UniswapAddresses } from "./mockInfo";
@@ -32,7 +33,7 @@ export async function unitFixtureForge(): Promise<Contract> {
 
 export async function unitFixtureVariables([owner] : Wallet[]): Promise<Contract> {
     const Variables = await ethers.getContractFactory("Variables")
-    const variables = await Variables.deploy(owner.address)
+    const variables = await Variables.deploy()
     await variables.deployed()
 
     return variables
@@ -74,4 +75,18 @@ export async function unitFixtureScoreMock(): Promise<Contract> {
     const scoreMock = await ScoreMock.deploy()
 
     return scoreMock
+}
+
+export async function unitFixtureReferral(): Promise<Contract> {
+    const Referral = await ethers.getContractFactory("Referral")
+    const referral = await Referral.deploy()
+    await referral.deployed()
+    return referral;
+}
+
+export async function unitFixturePunkRewardPool(): Promise<Contract> {
+    const PunkRewardPool = await ethers.getContractFactory("PunkRewardPool")
+    const punkRewardPool = await PunkRewardPool.deploy()
+    await punkRewardPool.deployed()
+    return punkRewardPool;
 }
