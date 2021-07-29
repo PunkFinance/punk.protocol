@@ -13,6 +13,7 @@ struct Saver{
     uint score;
     uint status;
     uint updatedTimestamp;
+    bytes12 ref;
 }
 
 struct Transaction{

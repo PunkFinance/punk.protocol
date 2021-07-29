@@ -73,7 +73,7 @@ contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ER
         require( startTimestamp > block.timestamp.add( 24 * 60 * 60 )  );
         
         uint index = countByAccount( msg.sender ) == 0 ? 0 : countByAccount( msg.sender );
-        _savers[ msg.sender ].push( Saver( block.timestamp, startTimestamp, count, interval, 0, 0, 0, 0, 0, 0, block.timestamp ) );
+        // _savers[ msg.sender ].push( Saver( block.timestamp, startTimestamp, count, interval, 0, 0, 0, 0, 0, 0, block.timestamp, 0 ) );
         _transactions[ msg.sender ][ index ].push( Transaction( true, block.timestamp, 0 ) );
         _count++;
         
@@ -101,7 +101,7 @@ contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ER
             _transactions[msg.sender][ index ].push( Transaction( true, block.timestamp, amount ) );
         }
 
-        _updateScore( msg.sender, index );
+        // _updateScore( msg.sender, index );
         _savers[msg.sender][index].mint += mint;
         _savers[msg.sender][index].accAmount += amount;
         _savers[msg.sender][index].updatedTimestamp = block.timestamp;
@@ -124,7 +124,7 @@ contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ER
         require( ableAmountPlp >= amountPlp );
 
         uint bonusPlp = balanceOf( address( this ) )
-                                .mul( s.score )
+                                // .mul( s.score )
                                 .mul( amountPlp )
                                 .div( s.mint )
                                 .div( totalScore() );
@@ -145,10 +145,10 @@ contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ER
         _savers[msg.sender][index].released += amountPlp;
         _savers[msg.sender][index].relAmount += ( amount + bonusAmount ).sub( buyback );
 
-        _transactions[ msg.sender ][index].push( Transaction( false, block.timestamp, amount ) );
+        _transactions[ msg.sender ][index].push( Transaction( true, block.timestamp, amount ) );
         _savers[msg.sender][index].status = 1;
         if( saver( msg.sender, index ).mint == saver( msg.sender, index ).released ) {
-            _totalScore = _totalScore.sub( saver( msg.sender, index ).score );
+            // _totalScore = _totalScore.sub( saver( msg.sender, index ).score );
             _savers[msg.sender][index].status = 3;
         }
         _savers[msg.sender][index].updatedTimestamp = block.timestamp;
@@ -172,8 +172,8 @@ contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ER
         _mint( address( this ), terminateFee );
         ModelInterface( modelAddress() ).withdrawTo( underlyingAmount, msg.sender );
         
-        _totalScore = _totalScore.sub( saver( msg.sender, index ).score );
-        _transactions[ msg.sender ][index].push( Transaction( false, block.timestamp, returnAmount ) );
+        // _totalScore = _totalScore.sub( saver( msg.sender, index ).score );
+        // _transactions[ msg.sender ][index].push( Transaction( block.timestamp, returnAmount ) );
         
         _savers[msg.sender][index].updatedTimestamp = block.timestamp;
 
@@ -195,16 +195,16 @@ contract ForgeEth is ForgeEthInterface, ForgeStorage, Ownable, Initializable, ER
     }
     
     function _updateScore( address account, uint index ) internal {
-        uint beforeScore = _savers[account][index].score;
-        _savers[account][ index ].score = Score.calculate(
-                    _savers[account][ index ].createTimestamp, 
-                    _savers[account][ index ].startTimestamp, 
-                    _transactions[account][ index ], 
-                    _savers[account][ index ].count, 
-                    _savers[account][ index ].interval, 
-                    decimals()
-                );
-        _totalScore = _totalScore.sub( beforeScore ).add( _savers[account][ index ].score );
+        // uint beforeScore = _savers[account][index].score;
+        // _savers[account][ index ].score = Score.calculate(
+        //             _savers[account][ index ].createTimestamp, 
+        //             _savers[account][ index ].startTimestamp, 
+        //             _transactions[account][ index ], 
+        //             _savers[account][ index ].count, 
+        //             _savers[account][ index ].interval, 
+        //             decimals()
+        //         );
+        // _totalScore = _totalScore.sub( beforeScore ).add( _savers[account][ index ].score );
     }
   
     function modelAddress() public view override returns ( address ){ return _model; }

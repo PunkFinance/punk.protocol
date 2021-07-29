@@ -23,7 +23,7 @@ export default function shouldBehaveLikeCraftingSaver(): void {
         it('should revert due to startTimestamp', async function() {
             const blockNumber = await ethers.provider.getBlockNumber()
             const blockInfo = await ethers.provider.getBlock(blockNumber)
-            await expect(this.contracts.forge.craftingSaver(100, blockInfo.timestamp, 100, 1000)).to.be.reverted
+            await expect(this.contracts.forge['craftingSaver(uint256,uint256,uint256,uint256)'](100, blockInfo.timestamp, 100, 1000)).to.be.reverted
         })
 
         it('should save craft works', async function () {
@@ -32,7 +32,7 @@ export default function shouldBehaveLikeCraftingSaver(): void {
             await this.contracts.daiContract.connect(this.signers.accountDai).approve(this.contracts.forge.address, ethToWei("10"))
             const startTimestamp = blockInfo.timestamp + 25 *60 * 60
             const saverIndex = await this.contracts.forge.connect(this.signers.accountDai).countByAccount(this.signers.accountDai.address)
-            await expect(this.contracts.forge.connect(this.signers.accountDai).craftingSaver(ethToWei("10"), startTimestamp, 100, 1000))
+            await expect(this.contracts.forge.connect(this.signers.accountDai)['craftingSaver(uint256,uint256,uint256,uint256)'](ethToWei("10"), startTimestamp, 100, 1000))
             .to.emit(this.contracts.forge, 'CraftingSaver')
             .withArgs(this.signers.accountDai.address, saverIndex, ethToWei("10"))
         })
@@ -72,8 +72,8 @@ export default function shouldBehaveLikeCraftingSaver(): void {
             await expect(this.contracts.forge.connect(this.signers.accountDai).addDeposit(0, 100)).to.be.reverted
         })
 
-        it('check score model', async function() {
+        // it('check score model', async function() {
             
-        })
+        // })
     })
 }
