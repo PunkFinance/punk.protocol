@@ -1,4 +1,4 @@
-import { unitFixtureCompoundModel, unitFixtureDaiToken, unitFixtureForge, unitFixtureOwnableStorage, unitFixtureUniswapV2, unitFixtureVariables, unitFixtureReferral, unitFixturePunkRewardPool } from "../../shared/fixtures"
+import { unitFixtureCompoundModel, unitFixtureDaiToken, unitFixtureForge, unitFixtureOwnableStorage, unitFixtureUniswapV2, unitFixtureVariables, unitFixtureReferral, unitFixturePunkRewardPool, unitFixtureTreasury } from "../../shared/fixtures"
 import { Tokens, CompoundAddresses, UniswapAddresses } from '../../shared/mockInfo'
 import shouldBehaveLikeCraftingSaver from "./effects/craftingSaver"
 
@@ -8,15 +8,15 @@ const symbol = "TSB"
 export function unitTestForge(): void {
     describe("Forge", function() {
         before(async function() {
+            const ownableStorage = await this.loadFixture(unitFixtureOwnableStorage)
             const forge = await this.loadFixture(unitFixtureForge)
             const variables = await this.loadFixture(unitFixtureVariables)
             const compoundModel = await this.loadFixture(unitFixtureCompoundModel)
             const uniswapV2Router = await this.loadFixture(unitFixtureUniswapV2)
             const daiContract = await this.loadFixture(unitFixtureDaiToken)
-            const ownableStorage = await this.loadFixture(unitFixtureOwnableStorage)
             const referral = await this.loadFixture(unitFixtureReferral)
             const rewardPool = await this.loadFixture(unitFixturePunkRewardPool)
-            
+            const treasury = await this.loadFixture(unitFixtureTreasury)
 
             this.contracts.forge = forge;
             this.contracts.variables = variables;
@@ -29,8 +29,8 @@ export function unitTestForge(): void {
 
             await this.contracts.variables.connect(this.signers.owner).initializeVariables(ownableStorage.address);
             await this.contracts.variables.connect(this.signers.owner).setReferral(referral.address);
-            await this.contracts.variables.connect(this.signers.owner).setTreasury("0x4722AE29673D4A978a7bb15b5247a8734FAEfd94");
-            await this.contracts.variables.connect(this.signers.owner).setOpTreasury("0x4722AE29673D4A978a7bb15b5247a8734FAEfd94");
+            await this.contracts.variables.connect(this.signers.owner).setTreasury(treasury.address);
+            await this.contracts.variables.connect(this.signers.owner).setOpTreasury(treasury.address);
             await this.contracts.variables.connect(this.signers.owner).setReward(rewardPool.address);
             
             await this.contracts.rewardPool.connect(this.signers.owner).initializePunkReward( ownableStorage.address, "0x6b175474e89094c44da98b954eedeac495271d0f" );

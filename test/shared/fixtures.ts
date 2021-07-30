@@ -84,6 +84,13 @@ export async function unitFixtureReferral(): Promise<Contract> {
     return referral;
 }
 
+export async function unitFixtureTreasury(): Promise<Contract> {
+    const Treasury = await ethers.getContractFactory("Treasury")
+    const treasury = await Treasury.deploy()
+    await treasury.deployed()
+    return treasury;
+}
+
 export async function unitFixturePunkRewardPool(): Promise<Contract> {
     const PunkRewardPool = await ethers.getContractFactory("PunkRewardPool")
     const punkRewardPool = await PunkRewardPool.deploy()

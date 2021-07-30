@@ -33,7 +33,7 @@ contract Variables is Ownable{
         _initializer = msg.sender;
     }
 
-    function initializeVariables( address storage_) public onlyInitializer{
+    function initializeVariables( address storage_) public{
         require(!_initailize, "VARIABLES : Already Initailized");
         Ownable.initialize(storage_);
         _initailize = true;
