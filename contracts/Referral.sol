@@ -9,7 +9,7 @@ contract Referral {
     
     function issue(address account) public returns(bool){
         require( account != address(0x0), "REF : Account is Zero address" );
-        require( _registers[account] == 0, "REF : Aleady Registry" );
+        require( _registers[account] == 0, "REF : Already Registry" );
         
         uint salt = 0;
         while( true ){

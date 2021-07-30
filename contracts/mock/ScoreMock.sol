@@ -17,7 +17,7 @@ contract ScoreMock {
          uint count, 
          uint interval, 
          uint decimals 
-    ) external view returns (uint score) {
+    ) external pure returns (uint score) {
         score = Score.calculate(createTimestamp, startTimestamp, transactions, count, interval, decimals);
     }
 }
