@@ -418,7 +418,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     */
     function _terminateValues( address account, uint index ) public view returns( uint amountOfWithdraw, uint amountOfServiceFee, uint amountOfReferral, address compensation ){
         Saver memory s = saver( account, index );
-        uint tf = _variables.earlyTerminateFee();
+        uint tf = _variables.earlyTerminateFee(address(this));
         uint sf = _variables.serviceFee();
         uint dc = _variables.discount();
         uint cm = _variables.compensation();

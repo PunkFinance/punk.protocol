@@ -5,7 +5,7 @@
       "strict": true,
       "esModuleInterop": true,
       "outDir": "dist",
-      "paths": { "~/*": ["src/*"] }
+      "paths": { "~/*": ["./src/*"] }
     },
     "include": ["./scripts", "./test"],
     "files": ["./hardhat.config.ts"]
