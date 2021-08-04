@@ -16,7 +16,8 @@ contract FairLaunch is Initializable, Ownable{
     event Deposit( uint256 blockNumber, uint256 blockTime, address account, uint256 amount, uint256 accAmount,uint256 totalAmount, uint256 cap, bytes12 referralCode);
     event Withdraw( uint256 blockNumber, uint256 blockTime, address account, uint256 amount, uint256 accAmount,uint256 totalAmount, uint256 cap, bytes12 referralCode);
     
-    uint256 constant private CLOSED_TIMESTAMP = 1629990000;
+    uint256 constant private OPEN_TIMESTAMP = 1628553600;
+    uint256 constant private CLOSED_TIMESTAMP = 1630022400;
 
     Referral private _referral;
     IERC20 private _token;
@@ -27,6 +28,7 @@ contract FairLaunch is Initializable, Ownable{
     uint256 private _cap;
     uint256 private _totalAmount;
     uint256 private _rewardCap;
+    string private _name;
 
     mapping( address=>bool ) _entered;
     mapping( address=>uint256 ) _indexes;
@@ -39,7 +41,8 @@ contract FairLaunch is Initializable, Ownable{
             address forge_,
             address token_,
             address referral_,
-            uint8 decimals_
+            uint8 decimals_,
+            string memory name_
         ) public initializer {
 
         Ownable.initialize( storage_ );
@@ -50,8 +53,8 @@ contract FairLaunch is Initializable, Ownable{
         _decimals       = decimals_;
         _totalAmount    = 0;
         _count          = 0;
-        _rewardCap      = 70000 * 10**decimals_;
-
+        _rewardCap      = 70000 * 10**18;
+        _name           = name_;
 
         _token.safeApprove(forge_,  2**256 - 1);
     }
@@ -61,6 +64,7 @@ contract FairLaunch is Initializable, Ownable{
     }
 
     function enter( uint256 amount, bytes12 ref ) public returns(bool) {
+        require( block.timestamp > OPEN_TIMESTAMP, "FL : Not Opened yet");
         require( _totalAmount + amount <= _cap, "FL : Amount Overflow" );
         require( _token.allowance(msg.sender, address(this)) >= amount, "FL : Allowance Error");
         
@@ -136,6 +140,10 @@ contract FairLaunch is Initializable, Ownable{
 
     function decimals() public view returns(uint256){
         return _decimals;
+    }
+
+    function name() public view returns(string memory){
+        return _name;
     }
 
     function caps() public view returns(uint256 [] memory, uint256 [] memory){
