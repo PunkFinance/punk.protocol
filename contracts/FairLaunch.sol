@@ -9,6 +9,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./interfaces/ForgeInterface.sol";
 import "./Ownable.sol";
 import "./Referral.sol";
+import "./Saver.sol";
 
 contract FairLaunch is Initializable, Ownable, ReentrancyGuard{
     using SafeERC20 for IERC20;
@@ -151,6 +152,15 @@ contract FairLaunch is Initializable, Ownable, ReentrancyGuard{
 
     function caps() public view returns(uint256 [] memory, uint256 [] memory){
         return ( _caps, _capUpdateTimestamps );
+    }
+
+    function withdrawable( address account ) public view returns(uint256 amount ){
+        ( bool entered, uint index ) = isEntered( msg.sender );
+        if( entered ){
+            Saver memory saver = _forge.saver( account, index );
+            amount = saver.mint.mul( 10**_decimals ).div( _forge.getExchangeRate() );
+            amount = amount.mul( 99 ).div(100);
+        }
     }
 
 }
