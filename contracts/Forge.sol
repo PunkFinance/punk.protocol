@@ -257,7 +257,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20, R
     *
     * @param index Saver's index
     */
-    function terminateSaver( uint index ) public override nonReentrant returns( bool ){
+    function terminateSaver( uint index ) public nonReentrant override returns( bool ){
         require( saver( msg.sender, index ).status < 2, "FORGE : Already Terminated" );
         Saver memory s = saver( msg.sender, index );
 
