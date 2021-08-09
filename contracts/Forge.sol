@@ -3,6 +3,7 @@ pragma solidity >=0.5.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/ForgeInterface.sol";
@@ -14,14 +15,14 @@ import "./ForgeStorage.sol";
 import "./libs/Score.sol";
 import "./Referral.sol";
 
-contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
+contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20, ReentrancyGuard{
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
     uint constant SECONDS_DAY = 86400;
 
     constructor() ERC20("PunkFinance","Forge"){}
-    
+
     /**
     * Initializing Forge's Variables, If already initialized, it will be reverted.
     * 
@@ -155,7 +156,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     * @param index Saver's index
     * @param amount ERC20 Amount
     */
-    function addDeposit( uint index, uint amount ) public override returns( bool ){
+    function addDeposit( uint index, uint amount ) public nonReentrant override returns( bool ){
         require( saver( msg.sender, index ).startTimestamp > block.timestamp, "FORGE : Unable to deposit" );
         require( saver( msg.sender, index ).status < 2, "FORGE : Terminated Saver" );
 
@@ -173,12 +174,6 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
             }
         }
 
-        {            
-            IERC20( _token ).safeTransferFrom( msg.sender, _model, amount );
-            ModelInterface( _model ).invest();
-            emit AddDeposit( msg.sender, index, amount );
-        }
-
         {
             // Avoid Stack Too Deep issue
             i = i + 0;
@@ -194,6 +189,12 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
             _updateScore( msg.sender, i );
         }
 
+        {            
+            IERC20( _token ).safeTransferFrom( msg.sender, _model, amount );
+            ModelInterface( _model ).invest();
+            emit AddDeposit( msg.sender, index, amount );
+        }
+
         return true;
     }
     
@@ -206,7 +207,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     * @param index Saver's index
     * @param amountPlp Forge's LP Token Amount
     */
-    function withdraw( uint index, uint amountPlp ) public override returns( bool ){
+    function withdraw( uint index, uint amountPlp ) public nonReentrant override returns( bool ){
         Saver memory s = saver( msg.sender, index );
         uint withdrawablePlp = withdrawable( msg.sender, index );
         require( s.status < 2 , "FORGE : Terminated Saver");
@@ -217,13 +218,6 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         {
             i = i + 0;
             ( uint amountOfWithdraw, uint amountOfServiceFee, uint amountOfBuyback , uint amountOfReferral, address ref ) = _withdrawValues(msg.sender, i, amountPlp);
-            _withdrawTo(amountOfWithdraw, msg.sender);
-            _withdrawTo(amountOfServiceFee, _variables.opTreasury() );
-            _withdrawTo(amountOfBuyback, _variables.treasury());
-            /* If referral code is valid, referral code providers will be rewarded. */
-            if( amountOfReferral > 0 && ref != address(0)){
-                _withdrawTo( amountOfReferral, ref );
-            }
             
             _savers[msg.sender][i].status = 1;
             _savers[msg.sender][i].released += amountPlp;
@@ -234,6 +228,14 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
                 _totalScore = _totalScore.sub( s.score );
             }
             emit Terminate( msg.sender, index, amountOfWithdraw );
+
+            _withdrawTo(amountOfWithdraw, msg.sender);
+            _withdrawTo(amountOfServiceFee, _variables.opTreasury() );
+            _withdrawTo(amountOfBuyback, _variables.treasury());
+            /* If referral code is valid, referral code providers will be rewarded. */
+            if( amountOfReferral > 0 && ref != address(0)){
+                _withdrawTo( amountOfReferral, ref );
+            }
         }
 
         {
@@ -255,7 +257,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
     *
     * @param index Saver's index
     */
-    function terminateSaver( uint index ) public override returns( bool ){
+    function terminateSaver( uint index ) public override nonReentrant returns( bool ){
         require( saver( msg.sender, index ).status < 2, "FORGE : Already Terminated" );
         Saver memory s = saver( msg.sender, index );
 
@@ -267,20 +269,20 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
             (uint amountOfWithdraw, uint amountOfServiceFee, uint amountOfReferral, address ref ) = _terminateValues( msg.sender, i );
             uint remain = s.mint.sub(s.released).mul( _tokenUnit ).div( getExchangeRate() );
             require( remain >= amountOfWithdraw, "FORGE : Insufficient Terminate Fee" );
-            /* the actual amount to be withdrawn. */ 
-            _withdrawTo( amountOfWithdraw, msg.sender );
-            /* service fee is charged. */
-            _withdrawTo( amountOfServiceFee, _variables.opTreasury() );
-
-            /* If referral code is valid, referral code providers will be rewarded. */
-            if( amountOfReferral > 0 && ref != address(0)){
-                _withdrawTo( amountOfReferral, ref );
-            }
-
+            
             _totalScore = _totalScore.sub( s.score );
             _savers[msg.sender][i].status = 2;
             _savers[msg.sender][i].updatedTimestamp = block.timestamp;   
             emit Terminate( msg.sender, index, amountOfWithdraw );
+
+            /* the actual amount to be withdrawn. */ 
+            _withdrawTo( amountOfWithdraw, msg.sender );
+            /* service fee is charged. */
+            _withdrawTo( amountOfServiceFee, _variables.opTreasury() );
+            /* If referral code is valid, referral code providers will be rewarded. */
+            if( amountOfReferral > 0 && ref != address(0)){
+                _withdrawTo( amountOfReferral, ref );
+            }
         }
 
         /* for pLP token */

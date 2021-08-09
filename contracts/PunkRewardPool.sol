@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0 <0.9.0;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Ownable.sol";
 
 // Hard Work Now! For Punkers by 0xViktor...
-contract PunkRewardPool is Ownable, Initializable{
+contract PunkRewardPool is Ownable, Initializable, ReentrancyGuard{
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
@@ -99,12 +100,19 @@ contract PunkRewardPool is Ownable, Initializable{
     
     function claimPunk( address to ) public {
         // Hard Work Now! For Punkers by 0xViktor...
-        for( uint i = 0 ; i < forges.length ; i++ ){
-            claimPunk( forges[ i ], to );
+        if( isStarting ){
+            for( uint i = 0 ; i < forges.length ; i++ ){
+                address forge = forges[i];
+                uint reward = getClaimPunk( forge, to );
+                checkPointBlocks[ forge ][ to ] = block.number;
+                if( reward > 0 ) Punk.safeTransfer( to, reward );
+                distributed[ forge ] = distributed[ forge ].add( reward );
+                totalDistributed = totalDistributed.add( reward );
+            }
         }
     }
 
-    function claimPunk( address forge, address to ) public {
+    function claimPunk( address forge, address to ) public nonReentrant {
         // Hard Work Now! For Punkers by 0xViktor...
         if( isStarting ){
             uint reward = getClaimPunk( forge, to );
@@ -125,7 +133,7 @@ contract PunkRewardPool is Ownable, Initializable{
         unstaking( forge, amount, msg.sender );
     }
     
-    function staking( address forge, uint amount, address from ) public {
+    function staking( address forge, uint amount, address from ) public nonReentrant {
         // Hard Work Now! For Punkers by 0xViktor...
         require( msg.sender == from || _checkForge( msg.sender ), "REWARD POOL : NOT ALLOWD" );
         claimPunk( from );
@@ -135,7 +143,7 @@ contract PunkRewardPool is Ownable, Initializable{
         totalSupplies[ forge ] = totalSupplies[ forge ].add( amount );
     }
     
-    function unstaking( address forge, uint amount, address from ) public {
+    function unstaking( address forge, uint amount, address from ) public nonReentrant {
         // Hard Work Now! For Punkers by 0xViktor...
         require( msg.sender == from || _checkForge( msg.sender ), "REWARD POOL : NOT ALLOWD" );
         claimPunk( from );

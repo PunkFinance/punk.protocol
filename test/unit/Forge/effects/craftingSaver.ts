@@ -72,6 +72,19 @@ export default function shouldBehaveLikeCraftingSaver(): void {
             await expect(this.contracts.forge.connect(this.signers.accountDai).addDeposit(0, 100)).to.be.reverted
         })
 
+        it('Enter FairLaunch', async function() {
+            await network.provider.send("evm_increaseTime", [86400]);
+            await network.provider.send("evm_mine")
+            await this.contracts.daiContract.connect(this.signers.accountDai).approve(this.contracts.fairLaunch.address, ethToWei("10"))
+            await this.contracts.fairLaunch.connect(this.signers.accountDai)['enter(uint256)'](10)
+        })
+
+        it('Exit FairLaunch', async function() {
+            await network.provider.send("evm_increaseTime", [86400]);
+            await network.provider.send("evm_mine")
+            await this.contracts.fairLaunch.connect(this.signers.accountDai).exit()
+        })
+
         // it('check score model', async function() {
             
         // })

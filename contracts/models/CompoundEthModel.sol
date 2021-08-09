@@ -102,9 +102,9 @@ contract CompoundEthModel is ModelInterface, ModelStorage, Ownable{
             
             address[] memory path = new address[](3);
             path[0] = address(_comp);
-            path[1] = IUniswapV2Router02( _uRouterV2 ).WETH();
+            path[1] = IUniswapV2Router( _uRouterV2 ).WETH();
 
-            IUniswapV2Router02(_uRouterV2).swapExactTokensForETH(
+            IUniswapV2Router(_uRouterV2).swapExactTokensForETH(
                 balance,
                 1,
                 path,

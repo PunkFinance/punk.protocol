@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0 <0.9.0;
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -9,7 +10,7 @@ import "./interfaces/ForgeInterface.sol";
 import "./Ownable.sol";
 import "./Referral.sol";
 
-contract FairLaunch is Initializable, Ownable{
+contract FairLaunch is Initializable, Ownable, ReentrancyGuard{
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -63,15 +64,16 @@ contract FairLaunch is Initializable, Ownable{
         return enter(amount, 0x0);
     }
 
-    function enter( uint256 amount, bytes12 ref ) public returns(bool) {
+    function enter( uint256 amount, bytes12 ref ) public nonReentrant returns(bool) {
         require( block.timestamp > OPEN_TIMESTAMP, "FL : Not Opened yet");
         require( _totalAmount + amount <= _cap, "FL : Amount Overflow" );
         require( _token.allowance(msg.sender, address(this)) >= amount, "FL : Allowance Error");
         
         ( bool entered, uint index ) = isEntered( msg.sender );
 
-        _token.safeTransferFrom(msg.sender, address(this), amount);
         address issuer = _referral.validate( ref );
+        _totalAmount = _totalAmount.add(amount);
+        _token.safeTransferFrom(msg.sender, address(this), amount);
 
         if( entered ){
             _forge.addDeposit(index, amount);
@@ -79,35 +81,36 @@ contract FairLaunch is Initializable, Ownable{
             _indexes[msg.sender] = _forge.countByAccount(address(this));
             _entered[msg.sender] = true;
             if( ref == 0x0 ){
-                _forge.craftingSaver(amount, CLOSED_TIMESTAMP, 1, 1);
                 _count += 1;
+                _forge.craftingSaver(amount, CLOSED_TIMESTAMP, 1, 1);
             }else{
                 require( issuer != address(0x0), "FL : Not Registry Ref Code");
-                _forge.craftingSaver(amount, CLOSED_TIMESTAMP, 1, 1, ref);
                 _count += 1;
+                _forge.craftingSaver(amount, CLOSED_TIMESTAMP, 1, 1, ref);
             }
         }
-        _totalAmount = _totalAmount.add(amount);
         ( entered, index ) = isEntered( msg.sender );
         emit Deposit(block.number, block.timestamp, msg.sender, amount, _forge.saver(address(this), index).accAmount, _totalAmount, _cap, _forge.saver(address(this), index).ref);
+
         return true;
     }
 
-    function exit() public returns(bool) {
+    function exit() public nonReentrant returns(bool) {
         require(_entered[msg.sender], "FL : Not Entering");
+        uint index = _indexes[msg.sender];
+
+        _entered[msg.sender] = false;
+        _totalAmount = _totalAmount.sub(_forge.saver(address(this), index).accAmount);
+        _count -= 1;
         
         uint beforeBalanceOf = _token.balanceOf(address(this));
-        uint index = _indexes[msg.sender];
         _forge.terminateSaver(index);
         uint afterBalanceOf = _token.balanceOf(address(this));
         uint repayable = afterBalanceOf.sub(beforeBalanceOf);
-        
-        _entered[msg.sender] = false;
         _token.safeTransfer(msg.sender, repayable);
-        _totalAmount = _totalAmount.sub(_forge.saver(address(this), index).accAmount);
-        _count -= 1;
-
+        
         emit Withdraw(block.number, block.timestamp, msg.sender, repayable, 0, _totalAmount, _cap, _forge.saver(address(this), index).ref);
+        
         return true;
     }
 

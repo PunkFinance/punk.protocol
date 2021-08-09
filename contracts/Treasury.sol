@@ -35,10 +35,10 @@ contract Treasury is Ownable, Initializable {
             
             address[] memory path = new address[](3);
             path[0] = address( _tokens[i] );
-            path[1] = IUniswapV2Router02(_uRouterV2).WETH();
+            path[1] = IUniswapV2Router(_uRouterV2).WETH();
             path[2] = address( _punk );
 
-            IUniswapV2Router02(_uRouterV2).swapExactTokensForTokens(
+            IUniswapV2Router(_uRouterV2).swapExactTokensForTokens(
                 balance,
                 1,
                 path,
@@ -49,10 +49,10 @@ contract Treasury is Ownable, Initializable {
 
         // For SwapEthForToken
         address[] memory pathForSwapEth = new address[](2);
-        pathForSwapEth[0] = IUniswapV2Router02(_uRouterV2).WETH();
+        pathForSwapEth[0] = IUniswapV2Router(_uRouterV2).WETH();
         pathForSwapEth[1] = address( _punk );
 
-        IUniswapV2Router02(_uRouterV2).swapExactETHForTokens{value:address(this).balance}(
+        IUniswapV2Router(_uRouterV2).swapExactETHForTokens{value:address(this).balance}(
             1,
             pathForSwapEth,
             _grinder,

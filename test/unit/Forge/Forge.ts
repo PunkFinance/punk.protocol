@@ -1,4 +1,4 @@
-import { unitFixtureCompoundModel, unitFixtureDaiToken, unitFixtureForge, unitFixtureOwnableStorage, unitFixtureUniswapV2, unitFixtureVariables, unitFixtureReferral, unitFixturePunkRewardPool, unitFixtureTreasury } from "../../shared/fixtures"
+import { unitFixtureCompoundModel, unitFixtureDaiToken, unitFixtureForge, unitFixtureOwnableStorage, unitFixtureUniswapV2, unitFixtureVariables, unitFixtureReferral, unitFixturePunkRewardPool, unitFixtureTreasury, unitFixtureFairLaunch } from "../../shared/fixtures"
 import { Tokens, CompoundAddresses, UniswapAddresses } from '../../shared/mockInfo'
 import shouldBehaveLikeCraftingSaver from "./effects/craftingSaver"
 
@@ -17,6 +17,7 @@ export function unitTestForge(): void {
             const referral = await this.loadFixture(unitFixtureReferral)
             const rewardPool = await this.loadFixture(unitFixturePunkRewardPool)
             const treasury = await this.loadFixture(unitFixtureTreasury)
+            const fairLaunch = await this.loadFixture(unitFixtureFairLaunch)
 
             this.contracts.forge = forge;
             this.contracts.variables = variables;
@@ -26,6 +27,12 @@ export function unitTestForge(): void {
             
             this.contracts.referral = referral
             this.contracts.rewardPool = rewardPool
+
+            this.contracts.fairLaunch = fairLaunch
+
+            await this.contracts.fairLaunch.initializeForge(ownableStorage.address, forge.address, Tokens.Dai, referral.address, 18, "FL-DAI");
+            await this.contracts.fairLaunch.connect(this.signers.owner).setCap("30000000000000000000")
+            console.log("await this.contracts.fairLaunch.connect(this.signers.owner)", await this.contracts.fairLaunch.connect(this.signers.owner))
 
             await this.contracts.variables.connect(this.signers.owner).initializeVariables(ownableStorage.address);
             await this.contracts.variables.connect(this.signers.owner).setReferral(referral.address);

@@ -31,9 +31,9 @@ export async function unitFixtureForge(): Promise<Contract> {
     return forge;
 }
 
-export async function unitFixtureVariables([owner] : Wallet[]): Promise<Contract> {
+export async function unitFixtureVariables([,,,,,owner] : Wallet[]): Promise<Contract> {
     const Variables = await ethers.getContractFactory("Variables")
-    const variables = await Variables.deploy()
+    const variables = await Variables.connect(owner).deploy()
     await variables.deployed()
 
     return variables
@@ -47,7 +47,7 @@ export async function unitFixtureCompoundModel(): Promise<Contract> {
 }
 
 export async function unitFixtureUniswapV2(): Promise<Contract> {
-    const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router02");
+    const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
     const uniswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, UniswapAddresses.UniswapV2Router02);
     return uniswapRouter
 }
@@ -96,4 +96,11 @@ export async function unitFixturePunkRewardPool(): Promise<Contract> {
     const punkRewardPool = await PunkRewardPool.deploy()
     await punkRewardPool.deployed()
     return punkRewardPool;
+}
+
+export async function unitFixtureFairLaunch(): Promise<Contract> {
+    const FairLaunch = await ethers.getContractFactory("FairLaunch")
+    const fairLaunch = await FairLaunch.deploy()
+    await fairLaunch.deployed()
+    return fairLaunch;
 }

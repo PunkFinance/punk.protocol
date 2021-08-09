@@ -103,10 +103,10 @@ contract CompoundModel is ModelInterface, ModelStorage{
             
             address[] memory path = new address[](3);
             path[0] = address(_comp);
-            path[1] = IUniswapV2Router02( _uRouterV2 ).WETH();
+            path[1] = IUniswapV2Router( _uRouterV2 ).WETH();
             path[2] = address( token( 0 ) );
 
-            IUniswapV2Router02(_uRouterV2).swapExactTokensForTokens(
+            IUniswapV2Router(_uRouterV2).swapExactTokensForTokens(
                 balance,
                 1,
                 path,
