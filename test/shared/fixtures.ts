@@ -3,6 +3,17 @@ import { Contract, Wallet } from "ethers";
 import { artifacts, ethers, waffle } from "hardhat"
 import { Tokens, UniswapAddresses } from "./mockInfo";
 
+let storage:Contract 
+let punkMock:Contract 
+
+export async function unitPunkMockFixtures([,,,,,owner] : Wallet[]): Promise<Contract> {
+    const Punk = await ethers.getContractFactory("PunkMock");
+    const punk = await Punk.deploy(owner.address)
+    await punk.deployed();
+    punkMock = punk;
+    return punk;
+}
+
 export async function libraryFixtures(): Promise<Contract> {
     const CommitmentWeight = await ethers.getContractFactory("CommitmentWeight")
     const commietmentWeight = await CommitmentWeight.deploy()
@@ -20,6 +31,30 @@ export async function libraryFixtures(): Promise<Contract> {
 }
 
 export async function unitFixtureForge(): Promise<Contract> {
+    const score = await libraryFixtures();
+    const Forge = await ethers.getContractFactory("Forge", {
+        libraries: {
+            Score: score.address,
+        }
+    });
+    const forge = await Forge.deploy()
+    await forge.deployed();
+    return forge;
+}
+
+export async function unitFixtureForge2nd(): Promise<Contract> {
+    const score = await libraryFixtures();
+    const Forge = await ethers.getContractFactory("Forge", {
+        libraries: {
+            Score: score.address,
+        }
+    });
+    const forge = await Forge.deploy()
+    await forge.deployed();
+    return forge;
+}
+
+export async function unitFixtureForge3rd(): Promise<Contract> {
     const score = await libraryFixtures();
     const Forge = await ethers.getContractFactory("Forge", {
         libraries: {
@@ -52,6 +87,12 @@ export async function unitFixtureUniswapV2(): Promise<Contract> {
     return uniswapRouter
 }
 
+export async function unitFixtureUniswapFactoryV2(): Promise<Contract> {
+    const IUniswapV2Factory = await artifacts.readArtifact("IUniswapV2Factory");
+    const uniswapFactory = await ethers.getContractAt(IUniswapV2Factory.abi, UniswapAddresses.UniswapFactoryV2);
+    return uniswapFactory
+}
+
 export async function unitFixtureDaiToken(): Promise<Contract> {
     const IDaiToken = await artifacts.readArtifact("IERC20")
     const daiToken = await ethers.getContractAt(IDaiToken.abi, Tokens.Dai)
@@ -62,6 +103,7 @@ export async function unitFixtureOwnableStorage([,,,,,owner] : Wallet[]): Promis
     const OwnableStorage = await ethers.getContractFactory("OwnableStorage")
     const ownableStorage = await OwnableStorage.connect(owner).deploy()
     await ownableStorage.deployed()
+    storage = ownableStorage;
     return ownableStorage
 }
 
@@ -89,6 +131,20 @@ export async function unitFixtureTreasury(): Promise<Contract> {
     const treasury = await Treasury.deploy()
     await treasury.deployed()
     return treasury;
+}
+
+export async function unitFixtureOpTreasury(): Promise<Contract> {
+    const OpTreasury = await ethers.getContractFactory("OperatorTreasury")
+    const opTreasury = await OpTreasury.deploy(storage.address)
+    await opTreasury.deployed()
+    return opTreasury;
+}
+
+export async function unitFixtureGrinder(): Promise<Contract> {
+    const Grinder = await ethers.getContractFactory("Grinder")
+    const grinder = await Grinder.deploy(punkMock.address)
+    await grinder.deployed()
+    return grinder;
 }
 
 export async function unitFixturePunkRewardPool(): Promise<Contract> {

@@ -3,7 +3,6 @@ pragma solidity >=0.5.0 <0.9.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./interfaces/ForgeInterface.sol";
@@ -11,7 +10,7 @@ import "./Ownable.sol";
 import "./Referral.sol";
 import "./Saver.sol";
 
-contract FairLaunch is Initializable, Ownable, ReentrancyGuard{
+contract FairLaunch is Ownable, ReentrancyGuard{
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -38,7 +37,7 @@ contract FairLaunch is Initializable, Ownable, ReentrancyGuard{
     uint256 [] private _caps;
     uint256 [] private _capUpdateTimestamps;
 
-    function initializeForge( 
+    function initialize( 
             address storage_, 
             address forge_,
             address token_,

@@ -7,7 +7,7 @@ contract Grinder {
 
     address _punk;
 
-    constructor( address punk_ ) payable {
+    constructor( address punk_ ) {
         _punk = punk_;
     }
 

@@ -4,7 +4,6 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/ForgeInterface.sol";
 import "./interfaces/ModelInterface.sol";
@@ -15,7 +14,7 @@ import "./ForgeStorage.sol";
 import "./libs/Score.sol";
 import "./Referral.sol";
 
-contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20, ReentrancyGuard{
+contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
@@ -35,7 +34,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20, R
     * @param decimals_ ERC20 (tokens_)'s decimals
     */
     function initializeForge( 
-            address storage_, 
+            address storage_,
             address variables_,
             string memory name_,
             string memory symbol_,
@@ -57,6 +56,8 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20, R
 
         _count          = 0;
         _totalScore     = 0;
+
+        emit Initialize();
     }
     
     /**
@@ -66,6 +67,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20, R
     */
     function setModel( address model_ ) public OnlyAdminOrGovernance returns( bool ){
         require( Address.isContract( model_), "FORGE : Model address must be the contract address.");
+        require( _model != model_, "FORGE : Current Model" );
         
         ModelInterface( _model ).withdrawAllToForge();
         IERC20( _token ).safeTransfer( model_, IERC20( _token ).balanceOf( address( this ) ) );
@@ -189,7 +191,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20, R
             _updateScore( msg.sender, i );
         }
 
-        {            
+        {
             IERC20( _token ).safeTransferFrom( msg.sender, _model, amount );
             ModelInterface( _model ).invest();
             emit AddDeposit( msg.sender, index, amount );
@@ -307,7 +309,11 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20, R
     * @return the exchange rate of ERC20 Token to pLP token
     */
     function getExchangeRate() public view override returns( uint ){
-        return totalSupply() == 0 ?_tokenUnit : _tokenUnit.mul( totalSupply() ).div( ModelInterface(_model ).underlyingBalanceWithInvestment() );
+        if( ModelInterface(_model ).underlyingBalanceWithInvestment() == 0 || totalSupply() == 0 ){
+            return _tokenUnit;
+        }else{
+            return _tokenUnit.mul( totalSupply() ).div( ModelInterface(_model ).underlyingBalanceWithInvestment() );
+        }
     }
 
     /**

@@ -4,22 +4,36 @@ pragma solidity >=0.5.0 <0.9.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "hardhat/console.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "../Ownable.sol";
 import "../interfaces/ModelInterface.sol";
 import "../ModelStorage.sol";
 import "../3rdDeFiInterfaces/CTokenInterface.sol";
 import "../3rdDeFiInterfaces/IUniswapV2Router.sol";
 
-contract CompoundModel is ModelInterface, ModelStorage{
+
+contract CompoundModel is ModelInterface, ModelStorage, Initializable{
     using SafeERC20 for IERC20;
     using SafeMath for uint;
 
     event Swap( uint compAmount, uint underlying );
+    event Initialize();
+
+    address creator;
 
     address _cToken;
     address _comp;
     address _comptroller;
     address _uRouterV2;
+
+    modifier onlyCreator() {
+        require( creator == msg.sender, "MODEL : Not Creator" );
+        _;
+    }
+
+    constructor(){
+        creator = msg.sender;
+    }
 
     function initialize( 
         address forge_, 
@@ -27,8 +41,8 @@ contract CompoundModel is ModelInterface, ModelStorage{
         address cToken_, 
         address comp_, 
         address comptroller_,
-        address uRouterV2_ ) public {
-
+        address uRouterV2_ ) public initializer onlyCreator
+        {
             addToken( token_ );
             setForge( forge_ );
             _cToken         = cToken_;
@@ -36,6 +50,7 @@ contract CompoundModel is ModelInterface, ModelStorage{
             _comptroller    = comptroller_;
             _uRouterV2      = uRouterV2_;
 
+            emit Initialize();
     }
 
     function underlyingBalanceInModel() public override view returns ( uint256 ){

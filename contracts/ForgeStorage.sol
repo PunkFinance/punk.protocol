@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "./Saver.sol";
 import "./Variables.sol";
 
-contract ForgeStorage{
+abstract contract ForgeStorage{
 
     Variables internal _variables;
     address internal _model;

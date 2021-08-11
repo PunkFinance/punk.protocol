@@ -7,57 +7,78 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./3rdDeFiInterfaces/IUniswapV2Router.sol";
 import "./Ownable.sol";
 
-contract Treasury is Ownable, Initializable {
+contract Treasury is Ownable {
     using SafeERC20 for IERC20;
 
-    address _punk;
-    address _grinder;
-    address [] _tokens;
-    address _uRouterV2;
+    mapping( uint256 => address ) private _tokens;
+    uint256 public count;
 
-    function initialize( address storage_, address grinder_, address punk_ ) public {
+    address private _punk;
+    address private _grinder;
+    address private _uRouterV2;
+    
+    event Initialize();
+    event AddAsset( address token );
+
+    function initialize( address storage_, address grinder_, address punk_, address uRouterV2_ ) public initializer {
         Ownable.initialize( storage_ );
         _grinder = grinder_;
         _punk = punk_;
+        _uRouterV2 = uRouterV2_;
+        emit Initialize();
     }
 
-    function addAsset( address token ) public {
-        for( uint i = 0 ; i < _tokens.length ; i++ ) require( _tokens[i] != token, "TREASURY : already registered token" );
-        _tokens.push( token );
+    function addAsset( address token ) public OnlyAdminOrGovernance {
+        require( IERC20(token).totalSupply() > 0, "TREASURY : token is Invalid" );
+        require( !existToken(token), "TREASURY : Already Registry Token" );
+        _tokens[count] = token;
+        count++;
+        emit AddAsset(token);
     }
 
     function buyBack() public OnlyAdminOrGovernance {
         // Hard Work Now! For Punkers by 0xViktor
-        for( uint i = 0 ; i < _tokens.length ; i++ ){
+        for( uint i = 0 ; i < count ; i++ ){
             
             uint balance = IERC20( _tokens[ i ] ).balanceOf( address( this ) );
-            IERC20( _tokens[ i ] ).safeApprove(address(_uRouterV2), balance);
+            if( balance > 0 ){
+                IERC20( _tokens[ i ] ).safeApprove(address(_uRouterV2), balance);
             
-            address[] memory path = new address[](3);
-            path[0] = address( _tokens[i] );
-            path[1] = IUniswapV2Router(_uRouterV2).WETH();
-            path[2] = address( _punk );
+                address[] memory path = new address[](3);
+                path[0] = address( _tokens[i] );
+                path[1] = IUniswapV2Router(_uRouterV2).WETH();
+                path[2] = address( _punk );
 
-            IUniswapV2Router(_uRouterV2).swapExactTokensForTokens(
-                balance,
+                IUniswapV2Router(_uRouterV2).swapExactTokensForTokens(
+                    balance,
+                    1,
+                    path,
+                    _grinder,
+                    block.timestamp + ( 15 * 60 )
+                );
+            }
+        }
+
+        // For SwapEthForToken
+        if( address(this).balance > 0 ){
+            address[] memory pathForSwapEth = new address[](2);
+            pathForSwapEth[0] = IUniswapV2Router(_uRouterV2).WETH();
+            pathForSwapEth[1] = address( _punk );
+
+            IUniswapV2Router(_uRouterV2).swapExactETHForTokens{value:address(this).balance}(
                 1,
-                path,
+                pathForSwapEth,
                 _grinder,
                 block.timestamp + ( 15 * 60 )
             );
         }
+    }
 
-        // For SwapEthForToken
-        address[] memory pathForSwapEth = new address[](2);
-        pathForSwapEth[0] = IUniswapV2Router(_uRouterV2).WETH();
-        pathForSwapEth[1] = address( _punk );
-
-        IUniswapV2Router(_uRouterV2).swapExactETHForTokens{value:address(this).balance}(
-            1,
-            pathForSwapEth,
-            _grinder,
-            block.timestamp + ( 15 * 60 )
-        );
+    function existToken( address token ) public view returns(bool){
+        for( uint i = 0 ; i < count ; i++ ){
+            if( _tokens[i] == token ) return true;
+        }
+        return false;
     }
 
     fallback () external payable {

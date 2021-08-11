@@ -2,18 +2,16 @@
 pragma solidity >=0.5.0 <0.9.0;
 
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./Ownable.sol";
 
 // Hard Work Now! For Punkers by 0xViktor...
-contract PunkRewardPool is Ownable, Initializable, ReentrancyGuard{
+contract PunkRewardPool is Ownable, ReentrancyGuard{
     using SafeMath for uint;
     using SafeERC20 for IERC20;
 
     bool isStarting = false;
-    bool isInitialize = false;
 
     uint constant MAX_WEIGHT = 500;
     uint constant BLOCK_YEAR = 2102400;
@@ -33,33 +31,44 @@ contract PunkRewardPool is Ownable, Initializable, ReentrancyGuard{
     mapping( address => uint ) distributed;
     uint totalDistributed;
 
-    function initializePunkReward( address storage_, address punk_ ) public initializer {
+    event Initialize();
+    event Start();
+    event AddForge(address forge);
+    event SetForge(address forge, uint weight);
+    event Claim(address forge, uint amount);
+    event Staking(address forge, uint amount, address from);
+    event Unstaking(address forge, uint amount, address from);
+
+    function initializeReward( address storage_, address punk_ ) public initializer {
         // Hard Work Now! For Punkers by 0xViktor...
-        require(!isInitialize);
         Ownable.initialize( storage_ );
         Punk = IERC20( punk_ );
         startBlock = 0;
         weightSum = 0;
         totalDistributed = 0;
 
-        isInitialize = true;
+        emit Initialize();
     }
 
     function start() public OnlyAdmin{
+        require(!isStarting, "PUNK_REWARD_POOL : Already Started");
         startBlock = block.number;
         isStarting = true;
+        emit Start();
     }
     
-    function addForge( address forge ) public OnlyAdminOrGovernance {
+    function addForge( address forge ) public OnlyAdmin {
         // Hard Work Now! For Punkers by 0xViktor...
-        require( !_checkForge( forge ), "PUNK_REWARD_POOL: Already Exist" );
+        require( Address.isContract(forge), "PUNK_REWARD_POOL : Not Contract Address");
+        require( !checkForge( forge ), "PUNK_REWARD_POOL: Already Exist" );
         forges.push( forge );
         weights[ forge ] = 0;
+        emit AddForge(forge);
     }
     
-    function setForge( address forge, uint weight ) public OnlyAdminOrGovernance {
+    function setForge( address forge, uint weight ) public OnlyAdmin {
         // Hard Work Now! For Punkers by 0xViktor...
-        require( _checkForge( forge ), "PUNK_REWARD_POOL: Not Exist Forge" );
+        require( checkForge( forge ), "PUNK_REWARD_POOL: Not Exist Forge" );
         ( uint minWeight , uint maxWeight ) = getWeightRange( forge );
         require( minWeight <= weight && weight <= maxWeight, "PUNK_REWARD_POOL: Invalid weight" );
         weights[ forge ] = weight;
@@ -69,6 +78,7 @@ contract PunkRewardPool is Ownable, Initializable, ReentrancyGuard{
             weightSum += weights[ forges[ i ] ];
         }
 
+        emit SetForge( forge, weight );
     }
 
     function getWeightRange( address forge ) public view returns( uint, uint ){
@@ -108,6 +118,7 @@ contract PunkRewardPool is Ownable, Initializable, ReentrancyGuard{
                 if( reward > 0 ) Punk.safeTransfer( to, reward );
                 distributed[ forge ] = distributed[ forge ].add( reward );
                 totalDistributed = totalDistributed.add( reward );
+                emit Claim( forge, reward );
             }
         }
     }
@@ -120,6 +131,7 @@ contract PunkRewardPool is Ownable, Initializable, ReentrancyGuard{
             if( reward > 0 ) Punk.safeTransfer( to, reward );
             distributed[ forge ] = distributed[ forge ].add( reward );
             totalDistributed = totalDistributed.add( reward );
+            emit Claim( forge, reward );
         }
     }
     
@@ -128,32 +140,34 @@ contract PunkRewardPool is Ownable, Initializable, ReentrancyGuard{
         staking( forge, amount, msg.sender );
     }
     
-    function unstaking( address forge, uint amount ) public {
-        // Hard Work Now! For Punkers by 0xViktor...
-        unstaking( forge, amount, msg.sender );
-    }
-    
     function staking( address forge, uint amount, address from ) public nonReentrant {
         // Hard Work Now! For Punkers by 0xViktor...
-        require( msg.sender == from || _checkForge( msg.sender ), "REWARD POOL : NOT ALLOWD" );
+        require( msg.sender == from || checkForge( msg.sender ), "REWARD POOL : NOT ALLOWD" );
         claimPunk( from );
         checkPointBlocks[ forge ][ from ] = block.number;
         IERC20( forge ).safeTransferFrom( from, address( this ), amount );
         balances[ forge ][ from ] = balances[ forge ][ from ].add( amount );
         totalSupplies[ forge ] = totalSupplies[ forge ].add( amount );
+        emit Staking(forge, amount, from);
+    }
+    
+    function unstaking( address forge, uint amount ) public {
+        // Hard Work Now! For Punkers by 0xViktor...
+        unstaking( forge, amount, msg.sender );
     }
     
     function unstaking( address forge, uint amount, address from ) public nonReentrant {
         // Hard Work Now! For Punkers by 0xViktor...
-        require( msg.sender == from || _checkForge( msg.sender ), "REWARD POOL : NOT ALLOWD" );
+        require( msg.sender == from || checkForge( msg.sender ), "REWARD POOL : NOT ALLOWD" );
         claimPunk( from );
         checkPointBlocks[ forge ][ from ] = block.number;
         balances[ forge ][ from ] = balances[ forge ][ from ].sub( amount );
         IERC20( forge ).safeTransfer( from, amount );
         totalSupplies[ forge ] = totalSupplies[ forge ].sub( amount );
+        emit Unstaking(forge, amount, from);
     }
     
-    function _checkForge( address forge ) internal view returns( bool ){
+    function checkForge( address forge ) public view returns( bool ){
         // Hard Work Now! For Punkers by 0xViktor...
         bool check = false;
         for( uint  i = 0 ; i < forges.length ; i++ ){
@@ -282,4 +296,5 @@ contract PunkRewardPool is Ownable, Initializable, ReentrancyGuard{
         // Hard Work Now! For Punkers by 0xViktor...
         return startBlock;
     }
+
 }

@@ -6,6 +6,7 @@ import "../Saver.sol";
 
 interface ForgeInterface{
 
+    event Initialize();
     event CraftingSaver ( address owner, uint index, uint deposit );
     event AddDeposit ( address owner, uint index, uint deposit );
     event Withdraw ( address owner, uint index, uint amount );

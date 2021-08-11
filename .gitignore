@@ -26,3 +26,4 @@ yarn.lock
 contracts/models/TestModel.sol
 contracts/models/TestETHModel.sol
 package-lock.json
+scripts/deploy.js

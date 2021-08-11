@@ -20,36 +20,26 @@ contract Variables is Ownable{
     address private _reward;
     address private _referral;
 
-    bool private _initailize = false;
-
     mapping( address => bool ) _emergency;
 
-    modifier onlyInitializer{
-        require(msg.sender == _initializer,"VARIABLES : Not Initializer");
-        _;
-    }
+    event Initialize();
 
-    constructor(){
-        _initializer = msg.sender;
-    }
-
-    function initializeVariables( address storage_) public onlyInitializer{
-        require(!_initailize, "VARIABLES : Already Initailized");
+    function initialize( address storage_) public override initializer{
         Ownable.initialize(storage_);
-        _initailize = true;
         _serviceFee = 1;
         _earlyTerminateFee = 1;
         _buybackRate = 20;
         _discount = 5;
         _compensation = 5;
+        emit Initialize();
     }
 
     function setEarlyTerminateFee( uint256 earlyTerminateFee_ ) public OnlyGovernance {
-        require(  1 <= earlyTerminateFee_ && earlyTerminateFee_ < 11, "VARIABLES : Fees range from 1 to 10." );
+        require(  0 <= earlyTerminateFee_ && earlyTerminateFee_ < 2, "VARIABLES : Fees range from 0 to 2." );
         _earlyTerminateFee = earlyTerminateFee_;
     }
     function setBuybackRate( uint256 buybackRate_ ) public OnlyGovernance {
-        require(  1 <= buybackRate_ && buybackRate_ < 30, "VARIABLES : BuybackRate range from 1 to 30." );
+        require(  0 <= buybackRate_ && buybackRate_ <= 20, "VARIABLES : BuybackRate range from 0 to 20." );
         _buybackRate = buybackRate_;
     }
 
@@ -77,8 +67,8 @@ contract Variables is Ownable{
         _referral = referral_;
     }
 
-    function setServiceFee( uint256 serviceFee_ ) public OnlyAdmin {
-        require(  1 <= serviceFee_ && serviceFee_ < 5, "VARIABLES : ServiceFees range from 1 to 10." );
+    function setServiceFee( uint256 serviceFee_ ) public OnlyGovernance {
+        require(  0 <= serviceFee_ && serviceFee_ <= 2, "VARIABLES : ServiceFees range from 0 to 2." );
         _serviceFee = serviceFee_;
     }
 
@@ -101,7 +91,6 @@ contract Variables is Ownable{
     }
 
     function buybackRate() public view returns( uint256 ){ return _buybackRate; }
-
 
     function isEmergency( address forge ) public view returns( bool ){
         return _emergency[ forge ];
