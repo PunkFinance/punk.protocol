@@ -168,7 +168,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
         {
             // Avoid Stack Too Deep issue
             i = i + 0;
-            mint = amount.mul( getExchangeRate( ) ).div( _tokenUnit );
+            mint = amount.mul( getExchangeRate() ).div( _tokenUnit );
             _mint( msg.sender, mint );
             if( _variables.reward() != address(0) ) {
                 approve( _variables.reward(), mint);
@@ -229,7 +229,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
                 _savers[msg.sender][i].status = 3;
                 _totalScore = _totalScore.sub( s.score );
             }
-            emit Terminate( msg.sender, index, amountOfWithdraw );
+            emit Withdraw( msg.sender, i, amountOfWithdraw );
 
             _withdrawTo(amountOfWithdraw, msg.sender);
             _withdrawTo(amountOfServiceFee, _variables.opTreasury() );
@@ -486,7 +486,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
             amountOfServiceFee = amount.mul( sf ).div( 100 );
             uint amountOfDc = amountOfServiceFee.mul( dc ).div( 100 );
             amountOfReferral = amountOfServiceFee.mul( cm ).div( 100 );
-            amountOfServiceFee = amountOfServiceFee.sub( amountOfDc ).sub( amountOfReferral );
+            amountOfServiceFee = amountOfServiceFee.sub( amountOfDc ).sub(amountOfReferral);
             amountOfWithdraw = amount.sub(amountOfServiceFee).sub(amountOfBuyback);
         }
 

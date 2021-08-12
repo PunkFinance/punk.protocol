@@ -1,4 +1,4 @@
-import { unitPunkMockFixtures, unitFixtureCompoundModel, unitFixtureDaiToken, unitFixtureForge,unitFixtureForge2nd, unitFixtureForge3rd, unitFixtureOwnableStorage, unitFixtureUniswapV2, unitFixtureUniswapFactoryV2, unitFixtureVariables, unitFixtureReferral, unitFixturePunkRewardPool, unitFixtureTreasury, unitFixtureOpTreasury } from "../shared/fixtures"
+import { unitPunkMockFixtures, unitFixtureCompoundModel, unitFixtureDaiToken, unitFixtureForge,unitFixtureForge2nd, unitFixtureForge3rd, unitFixtureOwnableStorage, unitFixtureUniswapV2, unitFixtureUniswapFactoryV2, unitFixtureVariables, unitFixtureReferral, unitFixturePunkRewardPool, unitFixtureTreasury, unitFixtureOpTreasury, unitFixtureRecoveryFund } from "../shared/fixtures"
 
 export function beforeBehavior(): void {
     before(async function() {
@@ -20,6 +20,7 @@ export function beforeBehavior(): void {
             treasury:await this.loadFixture(unitFixtureTreasury),
             opTreasury:await this.loadFixture(unitFixtureOpTreasury),
             grinder:await this.loadFixture(unitFixtureOpTreasury),
+            recoveryFundMock:await this.loadFixture(unitFixtureRecoveryFund),
         }
 
         await this.contracts.uniswapV2Factory.createPair( this.contracts.punkMock.address, await this.contracts.uniswapV2Router.WETH() )

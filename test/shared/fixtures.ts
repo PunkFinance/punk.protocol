@@ -99,6 +99,12 @@ export async function unitFixtureDaiToken(): Promise<Contract> {
     return daiToken
 }
 
+export async function unitFixtureRecoveryFund(): Promise<Contract> {
+    const RecoveryFundMock = await ethers.getContractFactory("RecoveryFundMock")
+    const recoveryFundMock = await RecoveryFundMock.deploy()
+    return recoveryFundMock
+}
+
 export async function unitFixtureOwnableStorage([,,,,,owner] : Wallet[]): Promise<Contract> {
     const OwnableStorage = await ethers.getContractFactory("OwnableStorage")
     const ownableStorage = await OwnableStorage.connect(owner).deploy()

@@ -11,16 +11,22 @@ import { unitTestTreasury } from "./Treasury/Treasury"
 import { unitTestPunkRewardPool } from "./PunkRewardPool/PunkRewardPool"
 import { unitTestCompoundModel } from "./CompoundModel/CompoundModel"
 
+import { unitTestRecoveryFund } from "./RecoveryFund/RecoveryFund"
+
 import { unitTestForge } from "./Forge/Forge"
 import { unitTestScore } from "./Score/Score"
 
 import {use} from 'chai';
 
+
 use(solidity);
 
 baseContext("Uint Tests", async function() {
+    
     beforeBehavior();
 
+    unitTestRecoveryFund();
+    
     unitTestOwnableStorage();
     
     unitTestVariables();
@@ -35,7 +41,6 @@ baseContext("Uint Tests", async function() {
 
     unitTestForge();
 
-    // unitTestOpTreasury();
-    // unitTestScore();
-    
+    unitTestScore();
+
 })
