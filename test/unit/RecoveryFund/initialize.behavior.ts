@@ -27,7 +27,7 @@ export function initialBehavior(): void {
 
         it('should Check total refund', async function() {
             const recoveryFundMock = this.contracts.recoveryFundMock;
-            await expect( await recoveryFundMock.totalRefund() ).eq(BigNumber.from("4041503630429289895300000").add(1000))
+            await expect( await recoveryFundMock.totalRefund() ).eq(BigNumber.from("4041503630429289895300000"))
         })
 
         it('should Check peUSD balances', async function(){

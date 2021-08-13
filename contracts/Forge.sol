@@ -389,7 +389,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
     * @param account subject to be withdrawn to
     */
     function _withdrawTo( uint amount, address account ) private {
-        ModelInterface( modelAddress() ).withdrawTo( amount, account );
+        if( amount != 0 ) ModelInterface( modelAddress() ).withdrawTo( amount, account );
     }
 
     /**

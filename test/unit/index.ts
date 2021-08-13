@@ -21,7 +21,7 @@ import {use} from 'chai';
 
 use(solidity);
 
-baseContext("Uint Tests", async function() {
+baseContext("Unit Tests", async function() {
     
     beforeBehavior();
 
