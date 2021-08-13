@@ -11,6 +11,8 @@ contract RecoveryFund is ERC20Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
+    event Refund( uint256 refundAmount, uint256 refunded );
+
     address [] private _victims;
     address public addressOfDAI = address(0x6B175474E89094C44Da98b954EedeAC495271d0F);
     uint256 public totalRefund;
@@ -127,6 +129,9 @@ contract RecoveryFund is ERC20Pausable, ReentrancyGuard {
 
         require( guaranteedSupply.sub(amountSent) == totalSupply(), "REFUND : guaranteedSupply is not amount sent" );
         refunded += amountSent;
+        
+        emit Refund( amountSent, refunded );
+        
         return false;
     }
 
