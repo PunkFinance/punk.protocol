@@ -10,14 +10,6 @@ struct Saver{
     uint256 released;
     uint256 accAmount;
     uint256 relAmount;
-    uint score;
     uint status;
     uint updatedTimestamp;
-    bytes12 ref;
-}
-
-struct Transaction{
-    bool pos;
-    uint timestamp;
-    uint amount;
 }

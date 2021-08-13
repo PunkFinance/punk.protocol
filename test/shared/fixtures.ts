@@ -14,53 +14,22 @@ export async function unitPunkMockFixtures([,,,,,owner] : Wallet[]): Promise<Con
     return punk;
 }
 
-export async function libraryFixtures(): Promise<Contract> {
-    const CommitmentWeight = await ethers.getContractFactory("CommitmentWeight")
-    const commietmentWeight = await CommitmentWeight.deploy()
-    await commietmentWeight.deployed()
-
-    const Score = await ethers.getContractFactory("Score", {
-        libraries: {
-            CommitmentWeight: commietmentWeight.address
-        }
-    });
-    const score = await Score.deploy()
-    await score.deployed();
-
-    return score
-}
-
 export async function unitFixtureForge(): Promise<Contract> {
-    const score = await libraryFixtures();
-    const Forge = await ethers.getContractFactory("Forge", {
-        libraries: {
-            Score: score.address,
-        }
-    });
+    const Forge = await ethers.getContractFactory("Forge");
     const forge = await Forge.deploy()
     await forge.deployed();
     return forge;
 }
 
 export async function unitFixtureForge2nd(): Promise<Contract> {
-    const score = await libraryFixtures();
-    const Forge = await ethers.getContractFactory("Forge", {
-        libraries: {
-            Score: score.address,
-        }
-    });
+    const Forge = await ethers.getContractFactory("Forge");
     const forge = await Forge.deploy()
     await forge.deployed();
     return forge;
 }
 
 export async function unitFixtureForge3rd(): Promise<Contract> {
-    const score = await libraryFixtures();
-    const Forge = await ethers.getContractFactory("Forge", {
-        libraries: {
-            Score: score.address,
-        }
-    });
+    const Forge = await ethers.getContractFactory("Forge");
     const forge = await Forge.deploy()
     await forge.deployed();
     return forge;
@@ -111,18 +80,6 @@ export async function unitFixtureOwnableStorage([,,,,,owner] : Wallet[]): Promis
     await ownableStorage.deployed()
     storage = ownableStorage;
     return ownableStorage
-}
-
-export async function unitFixtureScoreMock(): Promise<Contract> {
-    const score = await libraryFixtures();
-    const ScoreMock = await ethers.getContractFactory("ScoreMock", {
-        libraries: {
-            Score: score.address,
-        }
-    });
-    const scoreMock = await ScoreMock.deploy()
-
-    return scoreMock
 }
 
 export async function unitFixtureReferral(): Promise<Contract> {

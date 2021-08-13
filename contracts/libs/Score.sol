@@ -6,6 +6,13 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "./CommitmentWeight.sol";
 import "../Saver.sol";
 
+/** Do Not Used This Contract  */
+struct Transaction{
+    bool pos;
+    uint256 amount;
+    uint256 timestamp;
+}
+
 library Score {
     using SafeMath for uint;
     

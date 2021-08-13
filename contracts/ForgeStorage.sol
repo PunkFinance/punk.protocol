@@ -16,15 +16,10 @@ abstract contract ForgeStorage{
     string internal __symbol;
     uint8 internal __decimals;
     
-    
-    mapping( address => uint ) internal _tokensBalances;
-
     mapping( address => Saver [] ) _savers;
-    mapping( address => mapping( uint => Transaction [] ) ) _transactions;
 
     // set to address
     uint internal _count;
-    uint internal _totalScore;
 
     uint256[50] private ______gap;
 }

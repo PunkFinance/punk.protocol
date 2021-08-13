@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0 <0.9.0;
 
+/** Do Not Used This Contract  */
 library CommitmentWeight {
     
     uint constant DECIMALS = 8;

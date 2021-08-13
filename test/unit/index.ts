@@ -14,7 +14,6 @@ import { unitTestCompoundModel } from "./CompoundModel/CompoundModel"
 import { unitTestRecoveryFund } from "./RecoveryFund/RecoveryFund"
 
 import { unitTestForge } from "./Forge/Forge"
-import { unitTestScore } from "./Score/Score"
 
 import {use} from 'chai';
 
@@ -31,7 +30,8 @@ baseContext("Unit Tests", async function() {
     
     unitTestVariables();
     
-    unitTestReferral();
+    // Do Not used Contract
+    // unitTestReferral(); 
 
     unitTestTreasury();
 
@@ -40,7 +40,5 @@ baseContext("Unit Tests", async function() {
     unitTestCompoundModel();
 
     unitTestForge();
-
-    unitTestScore();
 
 })
