@@ -8,14 +8,12 @@ export function initialBehavior(): void {
             const forge = this.contracts.forge;
             const ownableStorage = this.contracts.ownableStorage;
             const variables = this.contracts.variables;
-            const compoundModel = this.contracts.compoundModel;
 
             await expect(forge.initializeForge(
                 ownableStorage.address,
                 variables.address,
                 "Punk-Forge-DAI-0",
                 "pDAI",
-                compoundModel.address,
                 Tokens.Dai,
                 18
             )).emit(forge, "Initialize")
@@ -24,17 +22,41 @@ export function initialBehavior(): void {
         it('should Revert Forge Initialize', async function() {
             const ownableStorage = this.contracts.ownableStorage;
             const variables = this.contracts.variables;
-            const compoundModel = this.contracts.compoundModel;
 
             await expect(this.contracts.forge.connect(this.signers.owner).initializeForge(
                 ownableStorage.address,
                 variables.address,
                 "Punk-Forge-DAI-0",
                 "pDAI",
-                compoundModel.address,
                 Tokens.Dai,
                 18
             )).to.be.reverted
+        })
+
+        it('should Revert Forge setModel Not Admin or Gov', async function() {
+            const forge = this.contracts.forge;
+            const compoundModel = this.contracts.compoundModel;
+            const account = this.signers.account1;
+            await expect(forge.connect(account).setModel(compoundModel.address)).to.be.reverted
+        })
+
+        it('should Revert Forge setModel address zero', async function() {
+            const forge = this.contracts.forge;
+            const owner = this.signers.owner;
+            await expect(forge.connect(owner).setModel("0x0000000000000000000000000000000000000000")).to.be.reverted
+        })
+
+        it('should Revert Forge setModel address EOA', async function() {
+            const forge = this.contracts.forge;
+            const owner = this.signers.owner;
+            await expect(forge.connect(owner).setModel(owner.address)).to.be.reverted
+        })
+
+        it('should Success Forge setModel', async function() {
+            const forge = this.contracts.forge;
+            const compoundModel = this.contracts.compoundModel;
+            const owner = this.signers.owner;
+            await expect(forge.connect(owner).setModel(compoundModel.address)).emit(forge, "SetModel").withArgs("0x0000000000000000000000000000000000000000", compoundModel.address);
         })
 
     })

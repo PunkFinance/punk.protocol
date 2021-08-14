@@ -24,7 +24,7 @@ baseContext("Unit Tests", async function() {
     
     beforeBehavior();
 
-    unitTestRecoveryFund();
+    // unitTestRecoveryFund();
     
     unitTestOwnableStorage();
     
