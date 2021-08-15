@@ -57,20 +57,17 @@ export function saverBehavior(): void {
                 .connect(account).craftingSaver( ethToWei("1") , startTimestamp, 2, 4))
                 .to.emit(forge, 'CraftingSaver')
                 .withArgs(account.address, saverIndex, ethToWei("1") )
-            
-            const saverIndex2 = await forge.connect(account).countByAccount(account.address)
-            await expect(forge
-                .connect(account).craftingSaver( ethToWei("1") , startTimestamp, 2, 4))
-                .to.emit(forge, 'CraftingSaver')
-                .withArgs(account.address, saverIndex2, ethToWei("1") )
-
+                
         })
+
 
         it('should Success addDeposit', async function() {
             const account = this.signers.accountDai
             const forge = this.contracts.forge
             const daiContract = this.contracts.daiContract;
             const balance = await daiContract.balanceOf( account.address );
+
+            const saver = await forge.saver(account.address, 0);
             // await expect(forge.connect(account).addDeposit(0, balance.div(3).toString())).to.emit(forge, 'AddDeposit').withArgs(account.address, 0, balance.div(3).toString())
             await expect(forge.connect(account).addDeposit(0, ethToWei("1"))).to.emit(forge, 'AddDeposit').withArgs(account.address, 0, ethToWei("1"))
         })
@@ -87,26 +84,15 @@ export function saverBehavior(): void {
 
             const forge = this.contracts.forge;
             const account = this.signers.accountDai
-
-            const blockNumber = await ethers.provider.getBlockNumber()
-            const blockInfo = await ethers.provider.getBlock(blockNumber)
             const withdrawable = await forge.connect(account).withdrawable(account.address, 0);
             await expect(forge.connect(account).withdraw(0, withdrawable.toString())).emit(forge, "Withdraw")
         })
 
         it('should Success terminateSaver', async function() {
-            await network.provider.send("evm_increaseTime", [306400]);
-            await network.provider.send("evm_mine")
 
             const forge = this.contracts.forge;
-            const compoundModel = this.contracts.compoundModel;
             const account = this.signers.accountDai
-            const daiContract = this.contracts.daiContract
-
-            await daiContract.connect(account).transfer(compoundModel.address, ethToWei("1"));
-            const saver = await forge.saver(account.address, 0);
-
-            const _withdrawValues = await forge.connect(account)._withdrawValues(account.address, 0, BigNumber.from(saver.mint).sub(saver.released).toString(), true );
+            var saver = await forge.saver(account.address, 0);
 
             await this.contracts.forge.connect(this.signers.accountDai).terminateSaver(0)
             await expect(this.contracts.forge.connect(this.signers.accountDai).terminateSaver(0)).to.be.reverted

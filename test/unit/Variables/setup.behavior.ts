@@ -28,7 +28,8 @@ export function setUpBehavior(): void {
 
     it("should Revert setTreasury Address Not Admin", async function () {
       const variables = this.contracts.variables;
-      const treasury = this.contracts.treasury;
+      // const treasury = this.contracts.treasury;
+      const treasury = this.contracts.opTreasury;
       const account1 = this.signers.account1;
       await expect(
         variables.connect(account1).setTreasury(treasury.address)
@@ -46,7 +47,8 @@ export function setUpBehavior(): void {
 
     it("should Success setTreasury Address", async function () {
       const variables = this.contracts.variables;
-      const treasury = this.contracts.treasury;
+      // const treasury = this.contracts.treasury;
+      const treasury = this.contracts.opTreasury;
       const owner = this.signers.owner;
       await variables.connect(owner).setTreasury(treasury.address);
       await expect(await variables.treasury()).to.be.eq(treasury.address);
@@ -79,31 +81,31 @@ export function setUpBehavior(): void {
       await expect(variables.connect(gov).setSuccessFee(fee)).to.be.reverted;
     });
 
-    it("should Revert setManagementFee Address Not Gov and Admin", async function () {
+    it("should Revert setServiceFee Address Not Gov and Admin", async function () {
       const variables = this.contracts.variables;
       const account1 = this.signers.account1;
-      await expect(variables.connect(account1).setManagementFee(10)).to.be.reverted;
+      await expect(variables.connect(account1).setServiceFee(10)).to.be.reverted;
     });
 
-    it("should Revert setManagementFee Address Admin", async function () {
+    it("should Revert setServiceFee Address Admin", async function () {
       const variables = this.contracts.variables;
       const owner = this.signers.owner;
       const fee = 1;
-      await expect(variables.connect(owner).setManagementFee(fee)).to.be.reverted;
+      await expect(variables.connect(owner).setServiceFee(fee)).to.be.reverted;
     });
 
-    it("should Success setManagementFee", async function () {
+    it("should Success setServiceFee", async function () {
       const variables = this.contracts.variables;
       const gov = this.signers.gov;
       const fee = 1;
-      await variables.connect(gov).setManagementFee(fee);
-      await expect(await variables.managementFee()).to.be.eq(fee);
+      await variables.connect(gov).setServiceFee(fee);
+      await expect(await variables.serviceFee()).to.be.eq(fee);
     });
 
-    it("should Revert setManagementFee Overflow Valeus", async function () {
+    it("should Revert setServiceFee Overflow Valeus", async function () {
       const variables = this.contracts.variables;
       const gov = this.signers.gov;
-      await expect(variables.connect(gov).setManagementFee(10)).to.be.reverted;
+      await expect(variables.connect(gov).setServiceFee(10)).to.be.reverted;
     });
 
     it("should Revert setFeeMultiplier Address Not Gov and Admin", async function () {

@@ -10,7 +10,7 @@ contract Variables is Ownable{
     address private _initializer;
 
     uint256 private _successFee;
-    uint256 private _managementFee;
+    uint256 private _serviceFee;
     uint256 private _feeMultiplier;
     
     address private _treasury;
@@ -21,7 +21,7 @@ contract Variables is Ownable{
     function initialize( address storage_) public override initializer{
         Ownable.initialize(storage_);
         _successFee= 20;
-        _managementFee = 1;
+        _serviceFee = 1;
         _feeMultiplier = 200;
         emit Initialize();
     }
@@ -31,9 +31,9 @@ contract Variables is Ownable{
         _successFee = setSuccessFee_;
     }
 
-    function setManagementFee( uint256 managementFee_ ) public OnlyGovernance {
-        require(  0 <= managementFee_ && managementFee_ <= 2, "VARIABLES : ManagementFee range from 0 to 2." );
-        _managementFee = managementFee_;
+    function setServiceFee( uint256 serviceFee_ ) public OnlyGovernance {
+        require(  0 <= serviceFee_ && serviceFee_ <= 2, "VARIABLES : ServiceFee range from 0 to 2." );
+        _serviceFee = serviceFee_;
     }
 
     function setFeeMultiplier( uint256 feeMultiplier_ ) public OnlyGovernance {
@@ -53,7 +53,7 @@ contract Variables is Ownable{
 
     function successFee() public view returns( uint256 ){ return _successFee; }
 
-    function managementFee() public view returns( uint256 ){ return _managementFee; }
+    function serviceFee() public view returns( uint256 ){ return _serviceFee; }
 
     function feeMultiplier() public view returns( uint256 ){ return _feeMultiplier; }
 
