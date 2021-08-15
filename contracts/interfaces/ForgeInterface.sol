@@ -27,7 +27,7 @@ interface ForgeInterface{
     function countAll() external view returns(uint);
     function saver( address account, uint index ) external view returns( Saver memory );
 
-    function getExchangeRate() external view returns( uint );
-    function getTotalVolume( ) external view returns( uint );
+    function exchangeRate() external view returns( uint );
+    function totalVolume( ) external view returns( uint );
 
 }

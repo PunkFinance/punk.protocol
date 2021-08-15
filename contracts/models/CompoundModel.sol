@@ -94,7 +94,7 @@ contract CompoundModel is ModelInterface, ModelStorage, Initializable{
         uint oldBalance = IERC20( token(0) ).balanceOf( address( this ) );
         CTokenInterface( _cToken ).redeemUnderlying( amount );
         uint newBalance = IERC20( token(0) ).balanceOf( address( this ) );
-        require(newBalance.sub( oldBalance ) > 0, "MODEL : REDEEM BALANCE IS ZERO");
+        require( newBalance.sub( oldBalance ) > 0, "MODEL : REDEEM BALANCE IS ZERO");
         IERC20( token( 0 ) ).safeTransfer( to, newBalance.sub( oldBalance ) );
         
         emit Withdraw( amount, forge(), block.timestamp);
