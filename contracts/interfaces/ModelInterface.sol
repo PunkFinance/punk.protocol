@@ -49,5 +49,9 @@ interface ModelInterface{
      * Emits a {Withdraw} event.
      */
     function withdrawTo( uint256 amount, address to )  external;
+
+    function forge() external view returns( address );
+
+    function token() external view returns( address );
     
 }

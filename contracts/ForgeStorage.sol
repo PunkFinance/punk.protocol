@@ -22,4 +22,9 @@ abstract contract ForgeStorage{
     uint internal _count;
 
     uint256[50] private ______gap;
+
+    modifier onlyNormalUser{
+        require(msg.sender == tx.origin, "FORGE : Not Wokring this Function SmartContract");
+        _;
+    }
 }

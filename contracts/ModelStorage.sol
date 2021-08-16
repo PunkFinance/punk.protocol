@@ -2,9 +2,14 @@
 pragma solidity >=0.5.0 <0.9.0;
 pragma experimental ABIEncoderV2;
 
-contract ModelStorage{
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/Address.sol";
+import "./interfaces/ModelInterface.sol";
+import "./interfaces/ModelInterface.sol";
+
+abstract contract ModelStorage is ModelInterface{
     
-    address [] private _tokens;
+    address private _token;
     address private _forge;
 
     /**
@@ -16,13 +21,12 @@ contract ModelStorage{
     }
 
     /**
-     * @dev Add a 'token' ERC20 to be used in the model.
+     * @dev set a 'token' ERC20 to be used in the model.
      */
-    function addToken( address token_ ) internal returns( bool ){
-        for( uint i = 0 ; i < tokens().length ; i++ ){
-            if( token( i ) == token_ ){ return false; }
-        }
-        _tokens.push( token_ );
+    function setToken( address token_ ) internal returns( bool ){
+        require( Address.isContract(token_), "MODEL : the address is not contract address" );
+        require( IERC20(token_).totalSupply() > 0, "MODEL : the address is not ERC20 Token" );
+        _token = token_;
         return true;
     }
     
@@ -32,6 +36,7 @@ contract ModelStorage{
      * IMPORTANT: 'Forge' should be non-replaceable by default.
      */
     function setForge( address forge_ ) internal returns( bool ){
+        require( Address.isContract(forge_), "MODEL : the address is not contract address" );
         _forge = forge_;
         return true;
     }
@@ -39,21 +44,14 @@ contract ModelStorage{
     /**
      * @dev Returns the address of the token as 'index'.
      */ 
-    function token( uint index ) public view returns( address ){
-        return _tokens[index];
-    }
-
-    /**
-     * @dev Returns a list of addresses of tokens.
-     */ 
-    function tokens() public view returns( address [] memory ){
-        return _tokens;
+    function token() public view override returns( address ){
+        return _token;
     }
 
     /**
      * @dev Returns the address of Forge.
      */ 
-    function forge() public view returns( address ){
+    function forge() public view override returns( address ){
         return _forge;
     }
 }

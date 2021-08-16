@@ -62,6 +62,8 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
     function setModel(address model_) public OnlyAdminOrGovernance returns (bool){
         require( model_ != address(0), "FORGE : Model address is zero" );
         require( Address.isContract(model_), "FORGE : Model address must be the contract address.");
+        require( ModelInterface(model_).token() == _token, "FORGE : Model has Token address is not equals");
+        require( ModelInterface(model_).forge() == address(this), "FORGE : Model has Forge address is not equals this address");
         require( _model != model_, "FORGE : Current Model");
 
         if( _model != address(0) ){
@@ -121,9 +123,10 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * @param count How often do you want to receive.
      * @param interval Number of times to receive (unit: 1 day)
      */
-    function craftingSaver( uint256 amount, uint256 startTimestamp, uint256 count, uint256 interval ) public override returns (bool) {
+    function craftingSaver( uint256 amount, uint256 startTimestamp, uint256 count, uint256 interval ) public override onlyNormalUser returns (bool) {
         require( amount > 0 && count > 0 && interval > 0 && startTimestamp > block.timestamp.add(24 * 60 * 60), "FORGE : Invalid Parameters");
         uint256 index = countByAccount(msg.sender);
+        require( index < 10, "FORGE : Too many crafting Account");
 
         _savers[msg.sender].push(
             Saver(
@@ -154,7 +157,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * @param index Saver's index
      * @param amount ERC20 Amount
      */
-    function addDeposit(uint256 index, uint256 amount) public override nonReentrant returns (bool){
+    function addDeposit(uint256 index, uint256 amount) public override nonReentrant onlyNormalUser returns (bool){
         require( saver(msg.sender, index).status < 2, "FORGE : Terminated Saver" );
 
         uint256 mint = 0;
@@ -194,7 +197,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * @param index Saver's index
      * @param hopeUnderlying Forge's LP Token Amount
      */
-    function withdrawUnderlying(uint256 index, uint256 hopeUnderlying) public override nonReentrant returns (bool){
+    function withdrawUnderlying(uint256 index, uint256 hopeUnderlying) public override nonReentrant onlyNormalUser returns (bool){
         return withdraw(index, _exchangeToLp(hopeUnderlying));
     }
 
@@ -207,7 +210,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * @param index Saver's index
      * @param hope Forge's LP Token Amount
      */
-    function withdraw(uint256 index, uint256 hope) public override nonReentrant returns (bool){
+    function withdraw(uint256 index, uint256 hope) public override nonReentrant onlyNormalUser returns (bool){
         Saver memory s = saver(msg.sender, index);
         uint256 withdrawablePlp = withdrawable(msg.sender, index);
         require(s.status < 2, "FORGE : Terminated Saver");
@@ -245,7 +248,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      *
      * @param index Saver's index
      */
-    function terminateSaver(uint256 index) public override nonReentrant returns (bool){
+    function terminateSaver(uint256 index) public override nonReentrant onlyNormalUser returns (bool){
         Saver memory s = saver(msg.sender, index);
         require(s.status < 2, "FORGE : Already Terminated or Completed");
 
@@ -281,10 +284,10 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * @return the exchange rate of ERC20 Token to pLP token
      */
     function exchangeRate() public view override returns (uint256) {
-        return totalVolume() == 0 ? _tokenUnit : 
+        return totalSupply() == 0 ? _tokenUnit : 
                 _tokenUnit
-                .mul( totalSupply() )
-                .div( totalVolume() );
+                .mul( totalVolume() )
+                .div( totalSupply() );
     }
 
     /**
@@ -428,10 +431,10 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
     }
 
     function _exchangeToUnderlying( uint256 amount ) public view returns( uint256 ){   
-        return amount.mul(_tokenUnit).div(exchangeRate());
+        return amount.mul(exchangeRate()).div(_tokenUnit);
     }
 
     function _exchangeToLp( uint256 amount ) public view returns( uint256 ){
-        return amount.mul(exchangeRate()).div(_tokenUnit);
+        return amount.mul(_tokenUnit).div(exchangeRate());
     }
 }
