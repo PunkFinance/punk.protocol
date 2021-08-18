@@ -27,7 +27,7 @@ export function initialBehavior(): void {
 
         it('should Check total refund', async function() {
             const recoveryFundMock = this.contracts.recoveryFundMock;
-            await expect( await recoveryFundMock.totalRefund() ).eq(BigNumber.from("4041503630429289895300000"))
+            await expect( await recoveryFundMock.totalRefund() ).eq(BigNumber.from("4041503630429289895300000").sub("89858957570000000000000"))
         })
 
         it('should Check peUSD balances', async function(){
@@ -35,7 +35,6 @@ export function initialBehavior(): void {
             await expect( await recoveryFundMock.balanceOf("0xe1cd21e5d6f4323E91dA943B0A4F1732acC7a138")).eq( BigNumber.from("1213998517300000000000000"));
             await expect( await recoveryFundMock.balanceOf("0xf49a12fE6a05bdFc7C0cd4FE2A19724CCFbA18d3")).eq( BigNumber.from("898535671700000000000000"));
             await expect( await recoveryFundMock.balanceOf("0x82dc92b01c7fF54911842956083795f60f6F64f4")).eq( BigNumber.from("673946680643589900000000"));
-            await expect( await recoveryFundMock.balanceOf("0x8ed32Ed24303092c016Cdb24d51e153AD88c4875")).eq( BigNumber.from("89858957570000000000000"));
             await expect( await recoveryFundMock.balanceOf("0xf2CcE4EcB119038dA9F4E18F82E07bb555FbAe2C")).eq( BigNumber.from("77613054250000000000000"));
             await expect( await recoveryFundMock.balanceOf("0x5522234194F499F1DBF2E26C6eBD802bc2Cd9A2f")).eq( BigNumber.from("77095278220000000000000"));
             await expect( await recoveryFundMock.balanceOf("0x896b94f4f27f12369698C302e2049cAe86936BbB")).eq( BigNumber.from("62897497019999995000000"));

@@ -16,7 +16,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    uint256 constant SECONDS_DAY = 86400;
+    uint256 constant SECONDS_DAY = 1 days;
     uint256 constant SECONDS_YEAR = 31556952;
 
     constructor() ERC20("PunkFinance", "Forge") {}
@@ -164,16 +164,12 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
         uint256 i = index;
         
         {
-            // Avoid Stack Too Deep issue
-            i = i + 0;
             mint = _exchangeToLp(amount);
             _mint(msg.sender, mint);
             autoStake( mint );
         }
 
         {
-            // Avoid Stack Too Deep issue
-            i = i + 0;
             _savers[msg.sender][i].mint += mint;
             _savers[msg.sender][i].accAmount += amount;
             _savers[msg.sender][i].updatedTimestamp = block.timestamp;
@@ -221,7 +217,6 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
 
         uint256 i = index;
         {
-            i = i + 0;
             autoUnstake(hope);
             ( uint256 amountOfWithdraw, uint256 amountOfServiceFee ) = _withdrawValues(msg.sender, i, hope, false);
 
@@ -256,7 +251,6 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
         uint256 hope = s.mint.sub(s.released);
       
         {
-            i = i + 0;
             autoUnstake( hope );
             ( uint256 amountOfWithdraw, uint256 amountOfServiceFee ) = _withdrawValues(msg.sender, i, hope, true);
 
