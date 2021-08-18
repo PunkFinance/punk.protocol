@@ -90,7 +90,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
     function withdrawable(address account, uint256 index) public view override returns (uint256){
         Saver memory s = saver(account, index);
         if (s.startTimestamp > block.timestamp) return 0;
-        if (s.status == Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED) return 0;
+        if (s.status == uint256 (Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED)) return 0;
 
         uint256 diff = block.timestamp.sub(s.startTimestamp);
         uint256 count = diff.div(SECONDS_DAY.mul(s.interval)).add(1);
@@ -160,7 +160,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * @param amount ERC20 Amount
      */
     function addDeposit(uint256 index, uint256 amount) public override nonReentrant onlyNormalUser returns (bool){
-        require( saver(msg.sender, index).status < Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED, "FORGE : Terminated Saver" );
+        require( saver(msg.sender, index).status < uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED), "FORGE : Terminated Saver" );
 
         uint256 mint = 0;
         uint256 i = index;
@@ -211,23 +211,22 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
     function withdraw(uint256 index, uint256 hope) public override nonReentrant onlyNormalUser returns (bool){
         Saver memory s = saver(msg.sender, index);
         uint256 withdrawablePlp = withdrawable(msg.sender, index);
-        require(s.status < Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED, "FORGE : Terminated Saver");
+        require(s.status < uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED), "FORGE : Terminated Saver");
         require(withdrawablePlp >= hope, "FORGE : Insufficient Amount");
 
         // TODO Confirm withdrawal of currency after use of balance.
         /* for Underlying ERC20 token */
 
-        uint256 i = index;
         {
             autoUnstake(hope);
-            ( uint256 amountOfWithdraw, uint256 amountOfServiceFee ) = _withdrawValues(msg.sender, i, hope, false);
+            ( uint256 amountOfWithdraw, uint256 amountOfServiceFee ) = _withdrawValues(msg.sender, index, hope, false);
 
-            _savers[msg.sender][i].released += hope;
-            _savers[msg.sender][i].relAmount += amountOfWithdraw;
-            _savers[msg.sender][i].updatedTimestamp = block.timestamp;
-            _savers[msg.sender][i].status = (_savers[msg.sender][i].mint == _savers[msg.sender][i].released) ? 3 : 1;
+            _savers[msg.sender][index].released += hope;
+            _savers[msg.sender][index].relAmount += amountOfWithdraw;
+            _savers[msg.sender][index].updatedTimestamp = block.timestamp;
+            _savers[msg.sender][index].status = (_savers[msg.sender][index].mint == _savers[msg.sender][index].released) ? 3 : 1;
 
-            emit Withdraw(msg.sender, i, amountOfWithdraw);
+            emit Withdraw(msg.sender, index, amountOfWithdraw);
 
             _withdrawTo(amountOfWithdraw, msg.sender);
             _withdrawTo(amountOfServiceFee, _variables.treasury());
@@ -247,7 +246,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      */
     function terminateSaver(uint256 index) public override nonReentrant onlyNormalUser returns (bool){
         Saver memory s = saver(msg.sender, index);
-        require(s.status < Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED, "FORGE : Already Terminated or Completed");
+        require(s.status < uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED), "FORGE : Already Terminated or Completed");
 
         uint256 i = index;
         uint256 hope = s.mint.sub(s.released);
@@ -256,7 +255,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
             autoUnstake( hope );
             ( uint256 amountOfWithdraw, uint256 amountOfServiceFee ) = _withdrawValues(msg.sender, i, hope, true);
 
-            _savers[msg.sender][i].status = Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED;
+            _savers[msg.sender][i].status = uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED);
             _savers[msg.sender][i].released += hope;
             _savers[msg.sender][i].relAmount += amountOfWithdraw;
             _savers[msg.sender][i].updatedTimestamp = block.timestamp;
