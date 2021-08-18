@@ -224,7 +224,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
             _savers[msg.sender][index].released += hope;
             _savers[msg.sender][index].relAmount += amountOfWithdraw;
             _savers[msg.sender][index].updatedTimestamp = block.timestamp;
-            _savers[msg.sender][index].status = (_savers[msg.sender][index].mint == _savers[msg.sender][index].released) ? 3 : 1;
+            _savers[msg.sender][index].status = (_savers[msg.sender][index].mint == _savers[msg.sender][index].released) ? uint256(Status.ALL_WITHDRAWN) : uint256(Status.NOTHING);
 
             emit Withdraw(msg.sender, index, amountOfWithdraw);
 
@@ -248,17 +248,16 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
         Saver memory s = saver(msg.sender, index);
         require(s.status < uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED), "FORGE : Already Terminated or Completed");
 
-        uint256 i = index;
         uint256 hope = s.mint.sub(s.released);
       
         {
             autoUnstake( hope );
-            ( uint256 amountOfWithdraw, uint256 amountOfServiceFee ) = _withdrawValues(msg.sender, i, hope, true);
+            ( uint256 amountOfWithdraw, uint256 amountOfServiceFee ) = _withdrawValues(msg.sender, index, hope, true);
 
-            _savers[msg.sender][i].status = uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED);
-            _savers[msg.sender][i].released += hope;
-            _savers[msg.sender][i].relAmount += amountOfWithdraw;
-            _savers[msg.sender][i].updatedTimestamp = block.timestamp;
+            _savers[msg.sender][index].status = uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED);
+            _savers[msg.sender][index].released += hope;
+            _savers[msg.sender][index].relAmount += amountOfWithdraw;
+            _savers[msg.sender][index].updatedTimestamp = block.timestamp;
             
             emit Terminate(msg.sender, index, amountOfWithdraw);
 
