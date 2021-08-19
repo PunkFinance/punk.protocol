@@ -68,9 +68,9 @@ export async function unitFixtureDaiToken(): Promise<Contract> {
     return daiToken
 }
 
-export async function unitFixtureRecoveryFund(): Promise<Contract> {
+export async function unitFixtureRecoveryFund([,,,,,owner] : Wallet[]): Promise<Contract> {
     const RecoveryFundMock = await ethers.getContractFactory("RecoveryFundMock")
-    const recoveryFundMock = await RecoveryFundMock.deploy()
+    const recoveryFundMock = await RecoveryFundMock.connect(owner).deploy()
     return recoveryFundMock
 }
 

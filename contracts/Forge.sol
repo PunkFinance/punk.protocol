@@ -164,14 +164,9 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
 
         uint256 mint = 0;
         uint256 i = index;
-        
+     
         {
             mint = _exchangeToLp(amount);
-            _mint(msg.sender, mint);
-            autoStake( mint );
-        }
-
-        {
             _savers[msg.sender][i].mint += mint;
             _savers[msg.sender][i].accAmount += amount;
             _savers[msg.sender][i].updatedTimestamp = block.timestamp;
@@ -181,6 +176,9 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
             IERC20(_token).safeTransferFrom(msg.sender, _model, amount);
             ModelInterface(_model).invest();
             emit AddDeposit(msg.sender, index, amount);
+
+            _mint(msg.sender, mint);
+            _autoStake( mint );
         }
 
         return true;
@@ -218,7 +216,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
         /* for Underlying ERC20 token */
 
         {
-            autoUnstake(hope);
+            _autoUnstake(hope);
             ( uint256 amountOfWithdraw, uint256 amountOfServiceFee ) = _withdrawValues(msg.sender, index, hope, false);
 
             _savers[msg.sender][index].released += hope;
@@ -251,7 +249,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
         uint256 hope = s.mint.sub(s.released);
       
         {
-            autoUnstake( hope );
+            _autoUnstake( hope );
             ( uint256 amountOfWithdraw, uint256 amountOfServiceFee ) = _withdrawValues(msg.sender, index, hope, true);
 
             _savers[msg.sender][index].status = uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED);
@@ -364,8 +362,13 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
         uint256 successFee = _successFee(s, hope);
         uint256 serviceFee = _serviceFee(s, hope).mul(isTerminate ? fm : 100).div(100);
 
-        amountOfFee = successFee.add(serviceFee);
-        amountOfWithdraw = amount.sub(amountOfFee);
+        if( successFee.add(serviceFee) >= amount ){
+            amountOfWithdraw = 0;
+            amountOfFee = successFee.add(serviceFee);
+        }else{
+            amountOfFee = successFee.add(serviceFee);
+            amountOfWithdraw = amount.sub(amountOfFee);
+        }
     }
 
     function _profit( Saver memory s ) private view returns(uint256){
@@ -377,20 +380,24 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
         return 0;
     }
 
-    function _successFee(Saver memory s, uint256 hope) public view returns (uint256 successFee){
+    function _successFee(Saver memory s, uint256 hope) private view returns (uint256 successFee){
         uint256 sf = _variables.successFee();
         uint256 profit = _profit( s );
         successFee = profit > 0 ? profit.mul(hope).mul(sf).div(100).div(s.mint) : 0;
     }
 
-    function _serviceFee(Saver memory s, uint256 hope) public view returns (uint256 serviceFee){
-        uint256 mf = _variables.serviceFee();
+    function _serviceFee(Saver memory s, uint256 hope) private view returns (uint256 serviceFee){
+        uint256 sf = _variables.serviceFee();
         uint256 period = block.timestamp.sub(s.createTimestamp);
         uint256 amount = _exchangeToUnderlying(hope);
-        serviceFee = amount.mul(period).mul(mf).div(SECONDS_YEAR).div(100);
+        if( period >= SECONDS_YEAR ){
+            serviceFee = amount.mul(sf).div(100);
+        }else{
+            serviceFee = amount.mul(period).mul(sf).div(SECONDS_YEAR).div(100);
+        }
     }
 
-    function autoStake(uint256 hope) public {
+    function _autoStake(uint256 hope) private {
         if (_variables.reward() != address(0)) {
             approve(_variables.reward(), balanceOf(msg.sender));
             PunkRewardPoolInterface(_variables.reward()).staking(
@@ -401,7 +408,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
         }
     }
 
-    function autoUnstake(uint256 hope) public {
+    function _autoUnstake(uint256 hope) private {
         if (_variables.reward() != address(0)) {
             PunkRewardPoolInterface(_variables.reward()).unstaking(
                 address(this),

@@ -7,5 +7,8 @@ import "../RecoveryFund.sol";
 
 contract RecoveryFundMock is RecoveryFund {
     using SafeERC20 for IERC20;
-    constructor() RecoveryFund() {}
+    constructor() RecoveryFund() {
+        _mint(address(0x6d6B6AfBF1B564CBE87E1e34d23ac17a43fc33de), 10000);
+        totalRefund = totalSupply();
+    }
 }
