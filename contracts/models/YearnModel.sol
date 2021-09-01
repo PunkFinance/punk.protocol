@@ -6,19 +6,25 @@ import "hardhat/console.sol";
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import {FixedPointMath} from "../libs/yearn/FixdPointMath.sol";
 import {IDetailedERC20} from "../interfaces/yearn/IDetailedERC20.sol";
 import {IVaultAdapter} from "../interfaces/yearn/IVaultAdapter.sol";
 import {IyVaultV2} from "../interfaces/yearn/IyVaultV2.sol";
+import "../interfaces/ModelInterface.sol";
+import "../ModelStorage.sol";
 
 /// @title YearnVaultAdapter
 ///
 /// @dev A vault adapter implementation which wraps a yEarn vault.
-contract YearnVaultAdapter is IVaultAdapter {
+contract YearnModel is IVaultAdapter, ModelInterface, ModelStorage, Initializable {
   using FixedPointMath for FixedPointMath.FixedDecimal;
   using SafeERC20 for IDetailedERC20;
   using SafeMath for uint256;
+  using SafeMath for uint;
+
+  event Swap(uint compAmount, uint underlying);
 
   /// @dev The vault that the adapter is wrapping.
   IyVaultV2 public vault;
@@ -29,11 +35,23 @@ contract YearnVaultAdapter is IVaultAdapter {
   /// @dev The decimals of the token.
   uint256 public decimals;
 
-  constructor(IyVaultV2 _vault, address _admin) public {
+  address creator;
+
+  constructor() {
+    creator = msg.sender;
+  }
+
+  function initialize(
+    IyVaultV2 _vault, 
+    address _admin,
+    address token_
+  ) public {
     vault = _vault;
     admin = _admin;
     updateApproval();
     decimals = _vault.decimals();
+    addToken(token_);
+    IERC20(token(0)).safeApprove(vault, uint256(-1));
   }
 
   /// @dev A modifier which reverts if the caller is not the admin.
@@ -52,15 +70,8 @@ contract YearnVaultAdapter is IVaultAdapter {
   /// @dev Gets the total value of the assets that the adapter holds in the vault.
   ///
   /// @return the total assets.
-  function totalValue() external view override returns (uint256) {
+  function totalValue() internal view override returns (uint256) {
     return _sharesToTokens(vault.balanceOf(address(this)));
-  }
-
-  /// @dev Deposits tokens into the vault.
-  ///
-  /// @param _amount the amount of tokens to deposit into the vault.
-  function deposit(uint256 _amount) external override {
-    vault.deposit(_amount);
   }
 
   /// @dev Withdraws tokens from the vault to the recipient.
@@ -97,4 +108,32 @@ contract YearnVaultAdapter is IVaultAdapter {
   function _tokensToShares(uint256 _tokensAmount) internal view returns (uint256) {
     return _tokensAmount.mul(10**decimals).div(vault.pricePerShare());
   }
+
+  function underlyingBalanceInModel() public override view returns (uint256) {
+    return IERC20(token(0)).balanceOf(address(this));
+  }
+
+  function underlyingBalanceWithInvestment() public override view returns (uint256) {
+    return underlyingBalanceInModel().add(totalValue());
+  }
+
+  function invest() public override {
+    vault.deposit(underlyingBalanceInModel());
+    emit Invest(underlyingBalanceInModel(), block.timestamp);
+  }
+
+  function reInvest() public override {
+    invest();
+  }
+
+  function withdrawAllToForge() public OnlyForge override {
+    vault.withdraw(_tokensToShares(_amount), forge());
+    emit Withdraw(underlyingBalanceWithInvestment(), forge(), block.timestamp);
+  }
+
+  function withdrawToForge(uint256 amount) public OnlyForge override {
+    withdrawTo(amount, forge());
+  }
+
+  
 }
