@@ -135,5 +135,16 @@ contract YearnModel is IVaultAdapter, ModelInterface, ModelStorage, Initializabl
     withdrawTo(amount, forge());
   }
 
+  function withdrawTo(uint256 amount, address to) public OnlyForge override {
+      uint oldBalance = IERC20(token(0)).balanceOf(address(this));
+      if (amount > oldBalance) {
+        vault.withdraw(_tokensToShares(_amount - oldBalance), forge());
+      }
+      uint newBalance = IERC20(token(0)).balanceOf(address(this));
+      require(newBalance.sub(oldBalance) > 0, "MODEL : REDEEM BALANCE IS ZERO");
+      IERC20(token(0)).safeTransfer(to, amount);
+      
+      emit Withdraw(amount, forge(), block.timestamp);
+  }
   
 }
