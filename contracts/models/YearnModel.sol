@@ -8,10 +8,11 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {SafeMath} from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
-import {FixedPointMath} from "../libs/yearn/FixdPointMath.sol";
+import {FixedPointMath} from "../libs/yearn/FixedPointMath.sol";
 import {IDetailedERC20} from "../interfaces/yearn/IDetailedERC20.sol";
 import {IVaultAdapter} from "../interfaces/yearn/IVaultAdapter.sol";
 import {IyVaultV2} from "../interfaces/yearn/IyVaultV2.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../interfaces/ModelInterface.sol";
 import "../ModelStorage.sol";
 
@@ -21,6 +22,7 @@ import "../ModelStorage.sol";
 contract YearnModel is IVaultAdapter, ModelInterface, ModelStorage, Initializable {
   using FixedPointMath for FixedPointMath.FixedDecimal;
   using SafeERC20 for IDetailedERC20;
+  using SafeERC20 for IERC20;
   using SafeMath for uint256;
   using SafeMath for uint;
 
@@ -51,7 +53,7 @@ contract YearnModel is IVaultAdapter, ModelInterface, ModelStorage, Initializabl
     updateApproval();
     decimals = _vault.decimals();
     addToken(token_);
-    IERC20(token(0)).safeApprove(vault, uint256(-1));
+    IERC20(token(0)).safeApprove(address(vault), type(uint256).max);
   }
 
   /// @dev A modifier which reverts if the caller is not the admin.
@@ -70,7 +72,7 @@ contract YearnModel is IVaultAdapter, ModelInterface, ModelStorage, Initializabl
   /// @dev Gets the total value of the assets that the adapter holds in the vault.
   ///
   /// @return the total assets.
-  function totalValue() internal view override returns (uint256) {
+  function totalValue() public view override returns (uint256) {
     return _sharesToTokens(vault.balanceOf(address(this)));
   }
 
@@ -87,7 +89,7 @@ contract YearnModel is IVaultAdapter, ModelInterface, ModelStorage, Initializabl
   /// @dev Updates the vaults approval of the token to be the maximum value.
   function updateApproval() public {
     address _token = vault.token();
-    IDetailedERC20(_token).safeApprove(address(vault), uint256(-1));
+    IDetailedERC20(_token).safeApprove(address(vault), type(uint256).max);
   }
 
   /// @dev Computes the number of tokens an amount of shares is worth.
@@ -122,12 +124,8 @@ contract YearnModel is IVaultAdapter, ModelInterface, ModelStorage, Initializabl
     emit Invest(underlyingBalanceInModel(), block.timestamp);
   }
 
-  function reInvest() public override {
-    invest();
-  }
-
   function withdrawAllToForge() public OnlyForge override {
-    vault.withdraw(_tokensToShares(_amount), forge());
+    vault.withdraw(_tokensToShares(vault.balanceOf(address(this))), forge());
     emit Withdraw(underlyingBalanceWithInvestment(), forge(), block.timestamp);
   }
 
@@ -138,7 +136,7 @@ contract YearnModel is IVaultAdapter, ModelInterface, ModelStorage, Initializabl
   function withdrawTo(uint256 amount, address to) public OnlyForge override {
       uint oldBalance = IERC20(token(0)).balanceOf(address(this));
       if (amount > oldBalance) {
-        vault.withdraw(_tokensToShares(_amount - oldBalance), forge());
+        vault.withdraw(_tokensToShares(amount - oldBalance), forge());
       }
       uint newBalance = IERC20(token(0)).balanceOf(address(this));
       require(newBalance.sub(oldBalance) > 0, "MODEL : REDEEM BALANCE IS ZERO");
