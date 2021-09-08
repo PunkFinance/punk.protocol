@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { Tokens, CompoundAddresses, UniswapAddresses } from "../../shared/mockInfo"
+import { Tokens, CompoundAddresses, UniswapAddresses } from "../../../shared/mockInfo"
 
 export function initialBehavior(): void {
     context("Initailize", function() {

@@ -166,3 +166,10 @@ export async function unitFixtureFairLaunch(): Promise<Contract> {
     await fairLaunch.deployed()
     return fairLaunch;
 }
+
+export async function unitFixtureYearnModel(): Promise<Contract> {
+    const YearnModel = await ethers.getContractFactory("YearnModel");
+    const yearnModel = await YearnModel.deploy();
+    await yearnModel.deployed();
+    return yearnModel;
+}

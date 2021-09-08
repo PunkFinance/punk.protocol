@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.6.12;
+pragma solidity ^0.8.0;
 
 library FixedPointMath {
   uint256 public constant DECIMALS = 18;
@@ -16,7 +16,7 @@ library FixedPointMath {
   }
 
   function maximumValue() internal pure returns (FixedDecimal memory) {
-    return FixedDecimal(uint256(-1));
+    return FixedDecimal(type(uint256).max);
   }
 
   function add(FixedDecimal memory self, FixedDecimal memory value) internal pure returns (FixedDecimal memory) {

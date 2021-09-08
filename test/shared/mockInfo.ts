@@ -5,6 +5,11 @@ export enum CompoundAddresses {
     cDai = "0x5d3a536E4D6DbD6114cc1Ead35777bAB948E3643"
 }
 
+export enum YearnAddresses {
+    yvUSDC = "0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9",
+    USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+}
+
 export enum UniswapAddresses {
     UniswapV2Router02 = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
     UniswapFactoryV2 = "0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f"

@@ -4,6 +4,7 @@ import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "hardhat-watcher";
+import "solidity-coverage"
 
 import "./tasks/accounts";
 import "./tasks/clean";

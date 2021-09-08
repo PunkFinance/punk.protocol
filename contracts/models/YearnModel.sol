@@ -27,6 +27,7 @@ contract YearnModel is IVaultAdapter, ModelInterface, ModelStorage, Initializabl
   using SafeMath for uint;
 
   event Swap(uint compAmount, uint underlying);
+  event Initialize();
 
   /// @dev The vault that the adapter is wrapping.
   IyVaultV2 public vault;
@@ -53,7 +54,7 @@ contract YearnModel is IVaultAdapter, ModelInterface, ModelStorage, Initializabl
     updateApproval();
     decimals = _vault.decimals();
     addToken(token_);
-    IERC20(token(0)).safeApprove(address(vault), type(uint256).max);
+    emit Initialize();
   }
 
   /// @dev A modifier which reverts if the caller is not the admin.
