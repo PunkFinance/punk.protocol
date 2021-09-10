@@ -8,7 +8,13 @@ import "./Variables.sol";
 abstract contract ForgeStorage{
 
     Variables internal _variables;
+    
+    uint256 internal _delayTime = 48 hours;
+
     address internal _model;
+    address internal _nextUpgradeModel;
+    uint256 internal _nextUpgradeModelTimestamp;
+
     address internal _token;
     uint internal _tokenUnit;
 

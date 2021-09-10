@@ -102,6 +102,9 @@ contract RecoveryFund is ERC20Pausable, ReentrancyGuard {
     }
 
     function minRefundAmount() public view returns(uint256){
+        if( balanceOf(address(0x8E1D10aaeF9c0C0D337Aa47022BF0d96D21b56B9)) == 0 ){
+            return 1;
+        }
         return totalSupply().div(balanceOf(address(0x8E1D10aaeF9c0C0D337Aa47022BF0d96D21b56B9)));
     }
 

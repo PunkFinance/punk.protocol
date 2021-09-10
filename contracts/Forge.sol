@@ -12,15 +12,25 @@ import "./interfaces/PunkRewardPoolInterface.sol";
 import "./Ownable.sol";
 import "./ForgeStorage.sol";
 
-contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
+contract Forge is
+    ForgeInterface,
+    ForgeStorage,
+    Ownable,
+    ERC20,
+    ReentrancyGuard
+{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
     uint256 constant SECONDS_DAY = 1 days;
     uint256 constant SECONDS_YEAR = 31556952;
     enum Status {
-        WITHDRAW_NOT_YET, NOTHING, ALREADY_WITHDRAWN_OR_IS_TERMINATED, ALL_WITHDRAWN
+        NOT_YET_WITHDRAWN_OR_WITHDRAWABLE,
+        ALREADY_WITHDRAWN,
+        IS_TERMINATED,
+        ALL_WITHDRAWN
     }
+
     constructor() ERC20("PunkFinance", "Forge") {}
 
     /**
@@ -53,30 +63,51 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
 
         _count = 0;
 
-        emit Initialize();
+        emit Initialize( storage_, variables_, token_, name_, symbol_ );
     }
 
-    /**
-     * Replace the model. If model_ isn't CA(ContractAddress), it will be reverted.
-     *
-     * @param model_ Address of the associated Model
-     */
-    function setModel(address model_) public OnlyAdminOrGovernance returns (bool){
-        require( model_ != address(0), "FORGE : Model address is zero" );
-        require( Address.isContract(model_), "FORGE : Model address must be the contract address.");
-        require( ModelInterface(model_).token() == _token, "FORGE : Model has Token address is not equals");
-        require( ModelInterface(model_).forge() == address(this), "FORGE : Model has Forge address is not equals this address");
-        require( _model != model_, "FORGE : Current Model");
 
-        if( _model != address(0) ){
+    function requestUpgradeModel(address model_)
+        public
+        OnlyAdminOrGovernance
+        returns (bool)
+    {
+        require(model_ != address(0), "FORGE : Model address is zero");
+        require(Address.isContract(model_),"FORGE : Model address must be the contract address.");
+        require(ModelInterface(model_).token() == _token,"FORGE : Model has Token address is not equals");
+        require(ModelInterface(model_).forge() == address(this),"FORGE : Model has Forge address is not equals this address");
+        require(_model != model_, "FORGE : Current Model");
+
+        if( modelAddress() == address(0) ){
+            _model = model_;
+            emit SetModel(address(0), model_);
+        }else{
+            _nextUpgradeModel = model_;
+            _nextUpgradeModelTimestamp = block.timestamp.add( _delayTime );
+            emit RequestUpgradeModel( _model, _nextUpgradeModel, _nextUpgradeModelTimestamp );
+        }
+        
+        return false;
+    }
+
+    function upgradeModelAccept() external override OnlyAdminOrGovernance returns(bool){
+        require(_nextUpgradeModel != address(0x0), "");
+        require(_nextUpgradeModelTimestamp <= block.timestamp, "");
+        require(_nextUpgradeModelTimestamp != 0, "");
+        
+        if (_model != address(0)) {
             ModelInterface(_model).withdrawAllToForge();
-            IERC20(_token).safeTransfer( model_, IERC20(_token).balanceOf(address(this)));
-            ModelInterface(model_).invest();
+            IERC20(_token).safeTransfer( _nextUpgradeModel, IERC20(_token).balanceOf(address(this)) );
+            ModelInterface(_nextUpgradeModel).invest();
         }
 
-        emit SetModel(_model, model_);
-        _model = model_;
-        return true;
+        emit SetModel(_model, _nextUpgradeModel);
+        _model = _nextUpgradeModel;
+        
+        _nextUpgradeModel = address(0x0);
+        _nextUpgradeModelTimestamp = 0;
+
+        return false;
     }
 
     /**
@@ -87,10 +118,18 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      *
      * @return the withdrawable amount.
      */
-    function withdrawable(address account, uint256 index) public view override returns (uint256){
+    function withdrawable(address account, uint256 index)
+        public
+        view
+        override
+        returns (uint256)
+    {
         Saver memory s = saver(account, index);
         if (s.startTimestamp > block.timestamp) return 0;
-        if (s.status == uint256 (Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED)) return 0;
+        if (
+            s.status == uint256(Status.IS_TERMINATED) ||
+            s.status == uint256(Status.ALL_WITHDRAWN)
+        ) return 0;
 
         uint256 diff = block.timestamp.sub(s.startTimestamp);
         uint256 count = diff.div(SECONDS_DAY.mul(s.interval)).add(1);
@@ -125,10 +164,21 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * @param count How often do you want to receive.
      * @param interval Number of times to receive (unit: 1 day)
      */
-    function craftingSaver( uint256 amount, uint256 startTimestamp, uint256 count, uint256 interval ) public override onlyNormalUser returns (bool) {
-        require( amount > 0 && count > 0 && interval > 0 && startTimestamp > block.timestamp.add(24 * 60 * 60), "FORGE : Invalid Parameters");
+    function craftingSaver(
+        uint256 amount,
+        uint256 startTimestamp,
+        uint256 count,
+        uint256 interval
+    ) public override onlyNormalUser returns (bool) {
+        require(
+            amount > 0 &&
+                count > 0 &&
+                interval > 0 &&
+                startTimestamp > block.timestamp.add(24 * 60 * 60),
+            "FORGE : Invalid Parameters"
+        );
         uint256 index = countByAccount(msg.sender);
-        require( index < 10, "FORGE : Too many crafting Account");
+        require(index < 10, "FORGE : Too many crafting Account");
 
         _savers[msg.sender].push(
             Saver(
@@ -140,7 +190,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
                 0,
                 0,
                 0,
-                0,
+                uint256(Status.NOT_YET_WITHDRAWN_OR_WITHDRAWABLE),
                 block.timestamp
             )
         );
@@ -159,12 +209,21 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * @param index Saver's index
      * @param amount ERC20 Amount
      */
-    function addDeposit(uint256 index, uint256 amount) public override nonReentrant onlyNormalUser returns (bool){
-        require( saver(msg.sender, index).status < uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED), "FORGE : Terminated Saver" );
+    function addDeposit(uint256 index, uint256 amount)
+        public
+        override
+        nonReentrant
+        onlyNormalUser
+        returns (bool)
+    {
+        require(
+            saver(msg.sender, index).status < uint256(Status.IS_TERMINATED),
+            "FORGE : Terminated Saver"
+        );
 
         uint256 mint = 0;
         uint256 i = index;
-     
+
         {
             mint = _exchangeToLp(amount);
             _savers[msg.sender][i].mint += mint;
@@ -178,7 +237,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
             emit AddDeposit(msg.sender, index, amount);
 
             _mint(msg.sender, mint);
-            _autoStake( mint );
+            _autoStake(mint);
         }
 
         return true;
@@ -188,12 +247,18 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * Withdraw
      *
      * Enter the amount of pLP token ( Do not enter ERC20 Token's Amount )
-     * Withdraw excluding service fee. if saver has referral code, then discount service fee.
+     * Withdraw excluding service fee.
      *
      * @param index Saver's index
      * @param hopeUnderlying Forge's LP Token Amount
      */
-    function withdrawUnderlying(uint256 index, uint256 hopeUnderlying) public override nonReentrant onlyNormalUser returns (bool){
+    function withdrawUnderlying(uint256 index, uint256 hopeUnderlying)
+        public
+        override
+        nonReentrant
+        onlyNormalUser
+        returns (bool)
+    {
         return withdraw(index, _exchangeToLp(hopeUnderlying));
     }
 
@@ -201,15 +266,24 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * Withdraw
      *
      * Enter the amount of pLP token ( Do not enter ERC20 Token's Amount )
-     * Withdraw excluding service fee. if saver has referral code, then discount service fee.
+     * Withdraw excluding service fee.
      *
      * @param index Saver's index
      * @param hope Forge's LP Token Amount
      */
-    function withdraw(uint256 index, uint256 hope) public override nonReentrant onlyNormalUser returns (bool){
+    function withdraw(uint256 index, uint256 hope)
+        public
+        override
+        nonReentrant
+        onlyNormalUser
+        returns (bool)
+    {
         Saver memory s = saver(msg.sender, index);
         uint256 withdrawablePlp = withdrawable(msg.sender, index);
-        require(s.status < uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED), "FORGE : Terminated Saver");
+        require(
+            s.status < uint256(Status.IS_TERMINATED),
+            "FORGE : Terminated Saver"
+        );
         require(withdrawablePlp >= hope, "FORGE : Insufficient Amount");
 
         // TODO Confirm withdrawal of currency after use of balance.
@@ -217,12 +291,18 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
 
         {
             _autoUnstake(hope);
-            ( uint256 amountOfWithdraw, uint256 amountOfServiceFee ) = _withdrawValues(msg.sender, index, hope, false);
+            (
+                uint256 amountOfWithdraw,
+                uint256 amountOfServiceFee
+            ) = _withdrawValues(msg.sender, index, hope, false);
 
             _savers[msg.sender][index].released += hope;
             _savers[msg.sender][index].relAmount += amountOfWithdraw;
             _savers[msg.sender][index].updatedTimestamp = block.timestamp;
-            _savers[msg.sender][index].status = (_savers[msg.sender][index].mint == _savers[msg.sender][index].released) ? uint256(Status.ALL_WITHDRAWN) : uint256(Status.NOTHING);
+            _savers[msg.sender][index].status = (_savers[msg.sender][index]
+                .mint == _savers[msg.sender][index].released)
+                ? uint256(Status.ALL_WITHDRAWN)
+                : uint256(Status.ALREADY_WITHDRAWN);
 
             emit Withdraw(msg.sender, index, amountOfWithdraw);
 
@@ -242,21 +322,33 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      *
      * @param index Saver's index
      */
-    function terminateSaver(uint256 index) public override nonReentrant onlyNormalUser returns (bool){
+    function terminateSaver(uint256 index)
+        public
+        override
+        nonReentrant
+        onlyNormalUser
+        returns (bool)
+    {
         Saver memory s = saver(msg.sender, index);
-        require(s.status < uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED), "FORGE : Already Terminated or Completed");
+        require(
+            s.status < uint256(Status.IS_TERMINATED),
+            "FORGE : Already Terminated or Completed"
+        );
 
         uint256 hope = s.mint.sub(s.released);
-      
-        {
-            _autoUnstake( hope );
-            ( uint256 amountOfWithdraw, uint256 amountOfServiceFee ) = _withdrawValues(msg.sender, index, hope, true);
 
-            _savers[msg.sender][index].status = uint256(Status.ALREADY_WITHDRAWN_OR_IS_TERMINATED);
+        {
+            _autoUnstake(hope);
+            (
+                uint256 amountOfWithdraw,
+                uint256 amountOfServiceFee
+            ) = _withdrawValues(msg.sender, index, hope, true);
+
+            _savers[msg.sender][index].status = uint256(Status.IS_TERMINATED);
             _savers[msg.sender][index].released += hope;
             _savers[msg.sender][index].relAmount += amountOfWithdraw;
             _savers[msg.sender][index].updatedTimestamp = block.timestamp;
-            
+
             emit Terminate(msg.sender, index, amountOfWithdraw);
 
             /* the actual amount to be withdrawn. */
@@ -276,10 +368,10 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * @return the exchange rate of ERC20 Token to pLP token
      */
     function exchangeRate() public view override returns (uint256) {
-        return totalSupply() == 0 ? _tokenUnit : 
-                _tokenUnit
-                .mul( totalVolume() )
-                .div( totalSupply() );
+        return
+            totalSupply() == 0
+                ? _tokenUnit
+                : _tokenUnit.mul(totalVolume()).div(totalSupply());
     }
 
     /**
@@ -317,7 +409,12 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      *
      * @return model address.
      */
-    function saver(address account, uint256 index) public view override returns (Saver memory){
+    function saver(address account, uint256 index)
+        public
+        view
+        override
+        returns (Saver memory)
+    {
         return _savers[account][index];
     }
 
@@ -339,8 +436,10 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * @param account subject to be withdrawn to
      */
     function _withdrawTo(uint256 amount, address account) private {
-        if (amount != 0)
-            ModelInterface(_model).withdrawTo(amount, account);
+        if (amount != 0) {
+            ModelInterface(_model).withdrawToForge(amount);
+            IERC20(_token).safeTransfer(account, amount);
+        }
     }
 
     /**
@@ -354,45 +453,62 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
      * @return amountOfWithdraw
      * @return amountOfFee
      */
-    function _withdrawValues( address account, uint256 index, uint256 hope, bool isTerminate ) public view returns (uint256 amountOfWithdraw, uint256 amountOfFee) {
+    function _withdrawValues(
+        address account,
+        uint256 index,
+        uint256 hope,
+        bool isTerminate
+    ) public view returns (uint256 amountOfWithdraw, uint256 amountOfFee) {
         Saver memory s = saver(account, index);
         uint256 fm = _variables.feeMultiplier();
 
         uint256 amount = _exchangeToUnderlying(hope);
         uint256 successFee = _successFee(s, hope);
-        uint256 serviceFee = _serviceFee(s, hope).mul(isTerminate ? fm : 100).div(100);
+        uint256 serviceFee = _serviceFee(s, hope)
+            .mul(isTerminate ? fm : 100)
+            .div(100);
 
-        if( successFee.add(serviceFee) >= amount ){
+        if (successFee.add(serviceFee) >= amount) {
             amountOfWithdraw = 0;
             amountOfFee = successFee.add(serviceFee);
-        }else{
+        } else {
             amountOfFee = successFee.add(serviceFee);
             amountOfWithdraw = amount.sub(amountOfFee);
         }
     }
 
-    function _profit( Saver memory s ) private view returns(uint256){
+    function _profit(Saver memory s) private view returns (uint256) {
         uint256 allValueToUnderlying = _exchangeToUnderlying(s.mint);
         uint256 accAmount = s.accAmount;
-        if( allValueToUnderlying > accAmount ){
+        if (allValueToUnderlying > accAmount) {
             allValueToUnderlying.sub(accAmount);
         }
         return 0;
     }
 
-    function _successFee(Saver memory s, uint256 hope) private view returns (uint256 successFee){
+    function _successFee(Saver memory s, uint256 hope)
+        private
+        view
+        returns (uint256 successFee)
+    {
         uint256 sf = _variables.successFee();
-        uint256 profit = _profit( s );
-        successFee = profit > 0 ? profit.mul(hope).mul(sf).div(100).div(s.mint) : 0;
+        uint256 profit = _profit(s);
+        successFee = profit > 0
+            ? profit.mul(hope).mul(sf).div(100).div(s.mint)
+            : 0;
     }
 
-    function _serviceFee(Saver memory s, uint256 hope) private view returns (uint256 serviceFee){
+    function _serviceFee(Saver memory s, uint256 hope)
+        private
+        view
+        returns (uint256 serviceFee)
+    {
         uint256 sf = _variables.serviceFee();
         uint256 period = block.timestamp.sub(s.createTimestamp);
         uint256 amount = _exchangeToUnderlying(hope);
-        if( period >= SECONDS_YEAR ){
+        if (period >= SECONDS_YEAR) {
             serviceFee = amount.mul(sf).div(100);
-        }else{
+        } else {
             serviceFee = amount.mul(period).mul(sf).div(SECONDS_YEAR).div(100);
         }
     }
@@ -410,11 +526,20 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
 
     function _autoUnstake(uint256 hope) private {
         if (_variables.reward() != address(0)) {
-            PunkRewardPoolInterface(_variables.reward()).unstaking(
-                address(this),
-                hope,
-                msg.sender
-            );
+            uint256 staked = PunkRewardPoolInterface(_variables.reward()).staked(address(this), msg.sender);
+            if (staked >= hope) {
+                PunkRewardPoolInterface(_variables.reward()).unstaking(
+                    address(this),
+                    hope,
+                    msg.sender
+                );
+            } else {
+                PunkRewardPoolInterface(_variables.reward()).unstaking(
+                    address(this),
+                    staked,
+                    msg.sender
+                );
+            }
         }
     }
 
@@ -431,11 +556,15 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, ERC20, ReentrancyGuard{
         return __decimals;
     }
 
-    function _exchangeToUnderlying( uint256 amount ) public view returns( uint256 ){   
+    function _exchangeToUnderlying(uint256 amount)
+        public
+        view
+        returns (uint256)
+    {
         return amount.mul(exchangeRate()).div(_tokenUnit);
     }
 
-    function _exchangeToLp( uint256 amount ) public view returns( uint256 ){
+    function _exchangeToLp(uint256 amount) public view returns (uint256) {
         return amount.mul(_tokenUnit).div(exchangeRate());
     }
 }

@@ -17,7 +17,7 @@ contract CompoundModel is ModelInterface, ModelStorage, Initializable{
     using SafeMath for uint;
 
     event Swap( uint compAmount, uint underlying );
-    event Initialize();
+    event Initialize( address forge, address model );
 
     address creator;
 
@@ -50,7 +50,7 @@ contract CompoundModel is ModelInterface, ModelStorage, Initializable{
             _comptroller    = comptroller_;
             _uRouterV2      = uRouterV2_;
 
-            emit Initialize();
+            emit Initialize( forge_, address(this) );
     }
 
     function underlyingBalanceInModel() public override view returns ( uint256 ){
@@ -86,17 +86,8 @@ contract CompoundModel is ModelInterface, ModelStorage, Initializable{
     }
 
     function withdrawToForge( uint256 amount ) public OnlyForge override{
-        withdrawTo( amount, forge() );
-    }
-
-    function withdrawTo( uint256 amount, address to ) public OnlyForge override{
-        // Hard Work Now! For Punkers by 0xViktor
-        uint oldBalance = IERC20( token() ).balanceOf( address( this ) );
         CTokenInterface( _cToken ).redeemUnderlying( amount );
-        uint newBalance = IERC20( token() ).balanceOf( address( this ) );
-        require( newBalance.sub( oldBalance ) > 0, "MODEL : REDEEM BALANCE IS ZERO");
-        IERC20( token() ).safeTransfer( to, newBalance.sub( oldBalance ) );
-        
+        IERC20( token() ).safeTransfer( forge(), amount );
         emit Withdraw( amount, forge(), block.timestamp);
     }
 

@@ -26,13 +26,12 @@ export function setUpBehavior(): void {
         it('should Revert addAsset Buyback Test', async function() {
             const treasury = this.contracts.treasury
             const owner = this.signers.owner
-            await treasury.connect(owner).buyBack()
+            await treasury.connect(owner).buyBack([1], 1);
         })
         
         // it('should Revert addAsset Buyback Test', async function() {
         //     const treasury = this.contracts.treasury
         //     const owner = this.signers.owner
-        //     const DAI = this.contracts.daiContract
         //     const swapResult = await this.contracts.uniswapV2Router.connect(this.signers.owner).swapExactETHForTokens(
         //         10000000000,
         //         [Tokens.WETH, Tokens.Dai],
@@ -41,7 +40,7 @@ export function setUpBehavior(): void {
         //         {value: "100000000000000000000", gasLimit: '2300000'}
         //     )
         //     await swapResult.wait()
-        //     await treasury.connect(owner).buyBack()
+        //     await treasury.connect(owner).buyBack([1], 1)
         // })
 
     })

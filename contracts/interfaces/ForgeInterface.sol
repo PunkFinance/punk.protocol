@@ -6,14 +6,16 @@ import "../Saver.sol";
 
 interface ForgeInterface{
 
-    event Initialize();
+    event Initialize( address storageAddress, address variables, address token, string name, string symbol );
     event CraftingSaver ( address owner, uint index, uint deposit );
     event AddDeposit ( address owner, uint index, uint deposit );
     event Withdraw ( address owner, uint index, uint amount );
     event Terminate ( address owner, uint index, uint amount );
     event SetModel ( address from, address to );
+    event RequestUpgradeModel ( address from, address to, uint upgradeTimestamp );
 
     function modelAddress() external view returns (address);
+    function upgradeModelAccept() external returns(bool);
 
     function withdrawable( address account, uint index ) external view returns(uint);
     function countByAccount( address account ) external view returns (uint);
@@ -29,5 +31,6 @@ interface ForgeInterface{
 
     function exchangeRate() external view returns( uint );
     function totalVolume( ) external view returns( uint );
+
 
 }

@@ -27,13 +27,11 @@ export function initialBehavior(): void {
 
         it('should Check total refund', async function() {
             const recoveryFundMock = this.contracts.recoveryFundMock;
-            await expect( await recoveryFundMock.totalRefund() ).eq(BigNumber.from("3951644672859289895300000").add("10000"))
+            await expect( await recoveryFundMock.totalRefund() ).eq(BigNumber.from("3951644672859289895300000"))
         })
 
         it('should Check peUSD balances', async function(){
             const recoveryFundMock = this.contracts.recoveryFundMock;
-            
-            await expect( await recoveryFundMock.balanceOf("0x6d6B6AfBF1B564CBE87E1e34d23ac17a43fc33de")).eq( BigNumber.from("10000"));
 
             await expect( await recoveryFundMock.balanceOf("0xe1cd21e5d6f4323E91dA943B0A4F1732acC7a138")).eq( BigNumber.from("1213998517300000000000000"));
             await expect( await recoveryFundMock.balanceOf("0xf49a12fE6a05bdFc7C0cd4FE2A19724CCFbA18d3")).eq( BigNumber.from("898535671700000000000000"));

@@ -4,7 +4,7 @@ import { setUpBehavior } from "./setup.behavior"
 
 export function unitTestRecoveryFund(): void {
     
-    describe("RecoveryFundMock", function() {
+    describe("RecoveryFund", function() {
         initialBehavior()
         setUpBehavior()
     })

@@ -41,15 +41,6 @@ interface ModelInterface{
      */
     function withdrawToForge( uint256 amount ) external;
 
-    /**
-     * @dev After withdrawing 'amount', send it to 'to'.
-     *
-     * IMPORTANT: Must use the "OnlyForge" Modifier from "ModelStorage.sol". 
-     * 
-     * Emits a {Withdraw} event.
-     */
-    function withdrawTo( uint256 amount, address to )  external;
-
     function forge() external view returns( address );
 
     function token() external view returns( address );

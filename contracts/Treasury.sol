@@ -11,13 +11,14 @@ contract Treasury is Ownable {
     using SafeERC20 for IERC20;
 
     mapping( uint256 => address ) private _tokens;
+    mapping( address => bool ) private _exists;
     uint256 public count;
 
     address private _punk;
     address private _grinder;
     address private _uRouterV2;
     
-    event Initialize();
+    event Initialize( address storageAddress, address grinder, address punk, address uniswapRouterV2 );
     event AddAsset( address token );
 
     function initialize( address storage_, address grinder_, address punk_, address uRouterV2_ ) public initializer {
@@ -25,19 +26,22 @@ contract Treasury is Ownable {
         _grinder = grinder_;
         _punk = punk_;
         _uRouterV2 = uRouterV2_;
-        emit Initialize();
+        emit Initialize( storage_, grinder_, punk_, uRouterV2_ );
     }
 
     function addAsset( address token ) public OnlyAdminOrGovernance {
         require( IERC20(token).totalSupply() > 0, "TREASURY : token is Invalid" );
-        require( !existToken(token), "TREASURY : Already Registry Token" );
+        require( !_exists[token], "TREASURY : Already Registry Token" );
         _tokens[count] = token;
+        _exists[token] = true;
         count++;
         emit AddAsset(token);
     }
 
-    function buyBack() public OnlyAdminOrGovernance {
+    function buyBack( uint256 [] memory amountOutMins, uint256 amountOutMinsEth ) public OnlyAdminOrGovernance {
         // Hard Work Now! For Punkers by 0xViktor
+        require(amountOutMins.length == count, "TREASURY : amountOutMins invalid");
+        require(amountOutMinsEth > 0, "TREASURY : amountOutMinsEth invalid");
         for( uint i = 0 ; i < count ; i++ ){
             
             uint balance = IERC20( _tokens[ i ] ).balanceOf( address( this ) );
@@ -51,7 +55,7 @@ contract Treasury is Ownable {
 
                 IUniswapV2Router(_uRouterV2).swapExactTokensForTokens(
                     balance,
-                    1,
+                    amountOutMins[i],
                     path,
                     _grinder,
                     block.timestamp + ( 15 * 60 )
@@ -66,7 +70,7 @@ contract Treasury is Ownable {
             pathForSwapEth[1] = address( _punk );
 
             IUniswapV2Router(_uRouterV2).swapExactETHForTokens{value:address(this).balance}(
-                1,
+                amountOutMinsEth,
                 pathForSwapEth,
                 _grinder,
                 block.timestamp + ( 15 * 60 )
@@ -74,11 +78,12 @@ contract Treasury is Ownable {
         }
     }
 
-    function existToken( address token ) public view returns(bool){
-        for( uint i = 0 ; i < count ; i++ ){
-            if( _tokens[i] == token ) return true;
+    function assets() public view returns( address [] memory ){
+        address[] memory assetsList = new address[](count);
+        for( uint256 i; i < count ;i++ ){
+            assetsList[i] = _tokens[i];
         }
-        return false;
+        return assetsList;
     }
 
     fallback () external payable {

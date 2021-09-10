@@ -37,26 +37,26 @@ export function initialBehavior(): void {
             const forge = this.contracts.forge;
             const compoundModel = this.contracts.compoundModel;
             const account = this.signers.account1;
-            await expect(forge.connect(account).setModel(compoundModel.address)).to.be.reverted
+            await expect(forge.connect(account).requestUpgradeModel(compoundModel.address)).to.be.reverted
         })
 
         it('should Revert Forge setModel address zero', async function() {
             const forge = this.contracts.forge;
             const owner = this.signers.owner;
-            await expect(forge.connect(owner).setModel("0x0000000000000000000000000000000000000000")).to.be.reverted
+            await expect(forge.connect(owner).requestUpgradeModel("0x0000000000000000000000000000000000000000")).to.be.reverted
         })
 
         it('should Revert Forge setModel address EOA', async function() {
             const forge = this.contracts.forge;
             const owner = this.signers.owner;
-            await expect(forge.connect(owner).setModel(owner.address)).to.be.reverted
+            await expect(forge.connect(owner).requestUpgradeModel(owner.address)).to.be.reverted
         })
 
         it('should Success Forge setModel', async function() {
             const forge = this.contracts.forge;
             const compoundModel = this.contracts.compoundModel;
             const owner = this.signers.owner;
-            await expect(forge.connect(owner).setModel(compoundModel.address)).emit(forge, "SetModel").withArgs("0x0000000000000000000000000000000000000000", compoundModel.address);
+            await expect(forge.connect(owner).requestUpgradeModel(compoundModel.address)).emit(forge, "SetModel").withArgs("0x0000000000000000000000000000000000000000", compoundModel.address);
         })
 
     })

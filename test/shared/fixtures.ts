@@ -1,6 +1,5 @@
-import { Signer } from "@ethersproject/abstract-signer"
 import { Contract, Wallet } from "ethers";
-import { artifacts, ethers, waffle } from "hardhat"
+import { artifacts, ethers } from "hardhat"
 import { Tokens, UniswapAddresses } from "./mockInfo";
 
 let storage:Contract 
@@ -56,12 +55,6 @@ export async function unitFixtureUniswapV2(): Promise<Contract> {
     return uniswapRouter
 }
 
-export async function unitFixtureUniswapFactoryV2(): Promise<Contract> {
-    const IUniswapV2Factory = await artifacts.readArtifact("IUniswapV2Factory");
-    const uniswapFactory = await ethers.getContractAt(IUniswapV2Factory.abi, UniswapAddresses.UniswapFactoryV2);
-    return uniswapFactory
-}
-
 export async function unitFixtureDaiToken(): Promise<Contract> {
     const IDaiToken = await artifacts.readArtifact("IERC20")
     const daiToken = await ethers.getContractAt(IDaiToken.abi, Tokens.Dai)
@@ -69,7 +62,7 @@ export async function unitFixtureDaiToken(): Promise<Contract> {
 }
 
 export async function unitFixtureRecoveryFund([,,,,,owner] : Wallet[]): Promise<Contract> {
-    const RecoveryFundMock = await ethers.getContractFactory("RecoveryFundMock")
+    const RecoveryFundMock = await ethers.getContractFactory("RecoveryFund")
     const recoveryFundMock = await RecoveryFundMock.connect(owner).deploy()
     return recoveryFundMock
 }
@@ -80,13 +73,6 @@ export async function unitFixtureOwnableStorage([,,,,,owner] : Wallet[]): Promis
     await ownableStorage.deployed()
     storage = ownableStorage;
     return ownableStorage
-}
-
-export async function unitFixtureReferral(): Promise<Contract> {
-    const Referral = await ethers.getContractFactory("Referral")
-    const referral = await Referral.deploy()
-    await referral.deployed()
-    return referral;
 }
 
 export async function unitFixtureTreasury(): Promise<Contract> {
@@ -122,4 +108,10 @@ export async function unitFixtureFairLaunch(): Promise<Contract> {
     const fairLaunch = await FairLaunch.deploy()
     await fairLaunch.deployed()
     return fairLaunch;
+}
+
+export async function unitFixtureUniswapFactoryV2(): Promise<Contract> {
+    const IUniswapV2Factory = await artifacts.readArtifact("IUniswapV2FactoryMock");
+    const uniswapFactory = await ethers.getContractAt(IUniswapV2Factory.abi, UniswapAddresses.UniswapFactoryV2);
+    return uniswapFactory
 }

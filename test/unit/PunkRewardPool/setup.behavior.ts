@@ -48,68 +48,13 @@ export function setUpBehavior(): void {
             await expect( rewardPool.connect(owner).addForge( forge.address ) ).to.be.reverted
         })
 
-        it('should Revert setForge Overflow Max Value', async function() {
-            const rewardPool = this.contracts.rewardPool
-            const forge = this.contracts.forge
-            const owner = this.signers.owner
-            const range:BigNumber[] = await rewardPool.getWeightRange(forge.address)
-            const weight = range[range.length-1].toNumber() + 1
-            await expect( rewardPool.connect(owner).setForge( forge.address, weight ) ).be.to.reverted
-        })
-
-        it('should Check weightRange Forge Counts 0', async function() {
-            const rewardPool = this.contracts.rewardPool
-            const forge = this.contracts.forge
-            const range:BigNumber[] = await rewardPool.getWeightRange(forge.address)
-            // Only 0 : 500
-            await expect( range[0].toNumber() ).eq( 0 )
-            await expect( range[1].toNumber() ).eq( 500 )
-        })
-
         it('should Success setForge', async function() {
             const rewardPool = this.contracts.rewardPool
             const forge = this.contracts.forge
             const owner = this.signers.owner
-            const weight = 10
+            const weight = 150
             await expect( rewardPool.connect(owner).setForge( forge.address, weight ) ).emit(rewardPool, "SetForge").withArgs(forge.address, weight)
             await expect( await rewardPool.getWeight(forge.address) ).equal(weight)
-        })
-
-        it('should Check weightRange Forge Counts 1', async function() {
-            const rewardPool = this.contracts.rewardPool
-            const forge2nd = this.contracts.forge2
-            const range:BigNumber[] = await rewardPool.getWeightRange(forge2nd.address)
-            // Only 10 : 10
-            await expect( range[0].toNumber() ).eq( 10 )
-            await expect( range[1].toNumber() ).eq( 10 )
-        })
-
-        it('should Success setForge 2nd', async function() {
-            const rewardPool = this.contracts.rewardPool
-            const forge2nd = this.contracts.forge2
-            const owner = this.signers.owner
-            const weight = 10
-
-            await expect( rewardPool.connect(owner).setForge( forge2nd.address, weight ) ).emit(rewardPool, "SetForge").withArgs(forge2nd.address, weight)
-            await expect( await rewardPool.getWeight(forge2nd.address) ).equal(weight)
-        })
-
-        it('should Check weightRange Forge Counts 2', async function() {
-            const rewardPool = this.contracts.rewardPool
-            const forge3rd = this.contracts.forge3
-            const range:BigNumber[] = await rewardPool.getWeightRange(forge3rd.address)
-            // Only 0 : 20
-            await expect( range[0].toNumber() ).eq( 0 )
-            await expect( range[1].toNumber() ).eq( 20 )
-        })
-
-        it('should Success setForge 3nd', async function() {
-            const rewardPool = this.contracts.rewardPool
-            const forge3rd = this.contracts.forge3
-            const owner = this.signers.owner
-            const weight = 10
-            await expect( rewardPool.connect(owner).setForge( forge3rd.address, weight ) ).emit(rewardPool, "SetForge").withArgs(forge3rd.address, weight)
-            await expect( await rewardPool.getWeight(forge3rd.address) ).equal(weight)
         })
 
         it('should Check getWeightSum', async function() {

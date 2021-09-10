@@ -8,6 +8,8 @@ import "./Ownable.sol";
 contract OperatorTreasury is Ownable {
     using SafeERC20 for IERC20;
 
+    event SetTo( address beforeAddress, address afterAddress );
+
     address private to;
 
     constructor( address storage_ ){
@@ -24,6 +26,7 @@ contract OperatorTreasury is Ownable {
     }
 
     function setTo(address account) public OnlyAdmin{
+        emit SetTo( to, account );
         to = account;
     }
     

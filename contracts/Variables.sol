@@ -7,8 +7,6 @@ import "./Saver.sol";
 
 contract Variables is Ownable{
 
-    address private _initializer;
-
     uint256 private _successFee;
     uint256 private _serviceFee;
     uint256 private _feeMultiplier;
