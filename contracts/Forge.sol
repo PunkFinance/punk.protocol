@@ -174,6 +174,7 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
         _savers[msg.sender][index].updatedTimestamp = block.timestamp;
 
         emit Terminate( msg.sender, index, underlyingAmount );
+        emit Bonus( msg.sender, index, returnAmount.sub( underlyingAmount ) );
         return true;
     }
 
@@ -212,4 +213,11 @@ contract Forge is ForgeInterface, ForgeStorage, Ownable, Initializable, ERC20{
 
     function transactions( address account, uint index ) public view override returns ( Transaction [] memory ){ return _transactions[account][index]; }
 
+    function updateTreaseury( address treasury_ ) public override OnlyAdmin returns( bool ){
+        if( Address.isContract(treasury_) ){
+            _treasury = treasury_;
+            return false;
+        }
+        return true;
+    }
 }

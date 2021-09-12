@@ -10,6 +10,7 @@ interface ForgeInterface{
     event AddDeposit ( address owner, uint index, uint deposit );
     event Withdraw ( address owner, uint index, uint amount );
     event Terminate ( address owner, uint index, uint amount );
+    event Bonus ( address owner, uint index, uint amount );
 
     function modelAddress() external view returns (address);
 
@@ -30,4 +31,5 @@ interface ForgeInterface{
     function getBonus() external view returns( uint );
     function getTotalVolume( ) external view returns( uint );
 
+    function updateTreaseury( address treasury_ ) external returns( bool );
 }

@@ -18,7 +18,7 @@ module.exports = {
     development: {
       host: "127.0.0.1",
       port: 8545,
-      network_id: "*",
+      network_id: "*"
      },
      kovan: {
       provider: () => new HDWalletProvider(mnemonic, `https://kovan.infura.io/v3/${infuraKey}`),
@@ -26,14 +26,14 @@ module.exports = {
       confirmations: 2,    
       timeoutBlocks: 400,  
       gasPrice:130000000000,
-      skipDryRun: true     
+      skipDryRun: true
     },
 
     ropsten: {
       provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infuraKey}`),
-      network_id: 3,       
-      confirmations: 2,    
-      timeoutBlocks: 400,  
+      network_id: 3,
+      confirmations: 2,
+      timeoutBlocks: 400,
       gasPrice:130000000000,
       skipDryRun: true 
     },
@@ -43,7 +43,6 @@ module.exports = {
       network_id: 1,       
       confirmations: 1,
       gasPrice:180000000000,
-      gas: 4247052,      
       timeoutBlocks: 400,
       skipDryRun: true 
     },

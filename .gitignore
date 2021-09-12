@@ -8,3 +8,4 @@ package-lock.json
 !/node_modules/@openzeppelin
 /contracts/models/TestModel.sol
 /contracts/OnlyTransfer.sol
+/contracts/EarlyContributorVesting.sol
