@@ -26,24 +26,24 @@ baseContext("Unit Tests", async function() {
     
     beforeBehavior();
 
-    // unitTestRecoveryFund();
+    unitTestRecoveryFund();
     
-    // unitTestOwnableStorage();
+    unitTestOwnableStorage();
     
-    // unitTestVariables();
+    unitTestVariables();
     
-    // unitTestReferral();
+    unitTestReferral();
 
-    // unitTestTreasury();
+    unitTestTreasury();
 
-    // unitTestPunkRewardPool();
+    unitTestPunkRewardPool();
 
-    // unitTestCompoundModel();
+    unitTestCompoundModel();
 
     unitTestYearnModel();
 
-    // unitTestForge();
+    unitTestForge();
 
-    // unitTestScore();
+    unitTestScore();
 
 })

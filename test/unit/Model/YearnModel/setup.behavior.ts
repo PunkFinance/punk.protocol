@@ -47,5 +47,20 @@ export function setUpBehavior(): void {
             const yearnModel = this.contracts.YearnModel
             await expect(yearnModel.withdrawAllToForge()).to.be.reverted
         })
+
+        it('should return accepted token', async function() {
+            const yearnModel = this.contracts.YearnModel;
+            await expect(await yearnModel.totalValue()).to.be.eq(0)
+        })
+        
+        it('should check underlying balance', async function() {
+            const yearnModel = this.contracts.YearnModel;
+            await expect(await yearnModel.underlyingBalanceInModel()).to.be.equal(0)
+        })
+        
+        it('should check underlyingBalanceWithInvestment', async function() {
+            const yearnModel = this.contracts.YearnModel;
+            await expect(await yearnModel.underlyingBalanceWithInvestment()).to.be.equal(0)
+        })
     })
 }

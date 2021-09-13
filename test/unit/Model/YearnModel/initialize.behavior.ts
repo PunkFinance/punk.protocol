@@ -3,7 +3,7 @@ import { Tokens, YearnAddresses, UniswapAddresses } from "../../../shared/mockIn
 
 export function initialBehavior(): void {
     context("Initailize", function() {
-
+        
         it('should Success initialize', async function() {
             const yearnModel = this.contracts.YearnModel
             await expect(yearnModel.initialize(
