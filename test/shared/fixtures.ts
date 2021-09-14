@@ -66,6 +66,18 @@ export async function unitFixtureForge3rd(): Promise<Contract> {
     return forge;
 }
 
+export async function unitFixtureForgeYearn(): Promise<Contract> {
+    const score = await libraryFixtures();
+    const Forge = await ethers.getContractFactory("Forge", {
+        libraries: {
+            Score: score.address,
+        }
+    });
+    const forge = await Forge.deploy()
+    await forge.deployed();
+    return forge;
+}
+
 export async function unitFixtureVariables([,,,,,owner] : Wallet[]): Promise<Contract> {
     const Variables = await ethers.getContractFactory("Variables")
     const variables = await Variables.connect(owner).deploy()

@@ -4,7 +4,7 @@ import { expect } from "chai";
 export function initialBehavior(): void {
     context("Initailize", function() {
 
-        it('should Success Forge Initialize', async function() {
+        it('should Success Forge Initialize with CompoundModel', async function() {
             const forge = this.contracts.forge;
             const ownableStorage = this.contracts.ownableStorage;
             const variables = this.contracts.variables;
@@ -21,7 +21,7 @@ export function initialBehavior(): void {
             )).emit(forge, "Initialize")
         })
 
-        it('should Revert Forge Initialize', async function() {
+        it('should Revert Forge Initialize with CompoundModel', async function() {
             const ownableStorage = this.contracts.ownableStorage;
             const variables = this.contracts.variables;
             const compoundModel = this.contracts.compoundModel;
@@ -32,6 +32,39 @@ export function initialBehavior(): void {
                 "Punk-Forge-DAI-0",
                 "pDAI",
                 compoundModel.address,
+                Tokens.Dai,
+                18
+            )).to.be.reverted
+        })
+        
+        it('should Success Forge Initialize with YearnModel', async function() {
+            const forgeYearn = this.contracts.forgeYearn;
+            const ownableStorage = this.contracts.ownableStorage;
+            const variables = this.contracts.variables;
+            const yearnModel = this.contracts.Yearnmodel;
+
+            await expect(forgeYearn.initializeForge(
+                ownableStorage.address,
+                variables.address,
+                "Punk-Forge-DAI-0",
+                "pDAI",
+                yearnModel.address,
+                Tokens.Dai,
+                18
+            )).emit(forgeYearn, "Initialize")
+        })
+
+        it('should Revert Forge Initialize with YearnModel', async function() {
+            const ownableStorage = this.contracts.ownableStorage;
+            const variables = this.contracts.variables;
+            const yearnModel = this.contracts.YearnModel;
+
+            await expect(this.contracts.forgeYearn.connect(this.signers.owner).initializeForge(
+                ownableStorage.address,
+                variables.address,
+                "Punk-Forge-DAI-0",
+                "pDAI",
+                yearnModel.address,
                 Tokens.Dai,
                 18
             )).to.be.reverted
