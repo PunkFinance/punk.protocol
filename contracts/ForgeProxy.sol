@@ -6,10 +6,7 @@ import "@openzeppelin/contracts/proxy/Proxy.sol";
 import "./OwnableStorage.sol";
 
 contract ForgeProxy is Proxy {
-    event Upgraded(address indexed implementation);
-    event RequestUpgradTo(address nextImplementation, uint256 nextImplementationTimestamp );
-
-    uint256 private constant DELAY_TIME = 48 hours;
+    event Upgraded(address indexed implementation, uint256 upgradeTimestamp);
 
     bytes32 private constant _IMPLEMENTATION_SLOT =
         0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
@@ -30,13 +27,8 @@ contract ForgeProxy is Proxy {
         _;
     }
 
-    modifier CheckAdmin() {
+    modifier OnlyAdmin() {
         require(OwnableStorage(_storage()).isAdmin(msg.sender), "OWNABLE: 0x0");
-        _;
-    }
-    
-    modifier onlyAdminOrGovernance() {
-        require(OwnableStorage(_storage()).isAdmin(msg.sender) || OwnableStorage(_storage()).isGovernance(msg.sender), "OWNABLE: 0x0");
         _;
     }
 
@@ -78,55 +70,15 @@ contract ForgeProxy is Proxy {
         }
     }
 
-    function _nextImplementation() internal view returns (address nextImplementation) {
-        bytes32 slot = _NEXT_IMPLEMENTATION_SLOT;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            nextImplementation := sload(slot)
-        }
-    }
-
-    function _setNextImplementation(address storage_) internal {
-        bytes32 slot = _NEXT_IMPLEMENTATION_SLOT;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            sstore(slot, storage_)
-        }
-    }
-
-    function _nextImplementationTimestamp() internal view returns (uint256 nextImplementationTimestamp) {
-        bytes32 slot = _NEXT_IMPLEMENTATION_TIMESTAMP_SLOT;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            nextImplementationTimestamp := sload(slot)
-        }
-    }
-
-    function _setNextImplementationTimestamp(uint256 nextImplementationTimestamp) internal {
-        bytes32 slot = _NEXT_IMPLEMENTATION_TIMESTAMP_SLOT;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            sstore(slot, nextImplementationTimestamp)
-        }
-    }
-
-    function requestUpgradeTo(address newImplementation) public onlyAdminOrGovernance {
+    function requestUpgradeTo(address newImplementation) public OnlyAdmin {
         require( newImplementation != address(0), "" );
         require( Address.isContract(newImplementation), "");
 
-        _setNextImplementation(newImplementation);
-        _setNextImplementationTimestamp(block.timestamp + DELAY_TIME);
-
-        emit RequestUpgradTo(_nextImplementation(), _nextImplementationTimestamp());
-    }
-
-    function upgradeAccept(address ) public onlyAdminOrGovernance {
-        require( _nextImplementation() != address(0), "" );
-        require( _nextImplementationTimestamp() <= block.timestamp, "" );
+        _setImplementation(newImplementation);
         
-        _setImplementation(_nextImplementation());
-        emit Upgraded(_nextImplementation());
+        emit Upgraded(newImplementation, block.timestamp);
     }
+
 
     function _setImplementation(address newImplementation) private {
         require(

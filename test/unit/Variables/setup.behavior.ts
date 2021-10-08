@@ -1,139 +1,356 @@
+import { keccak256 } from "@ethersproject/keccak256";
 import { expect } from "chai";
+import { ethers, network } from "hardhat";
+import { abiEncode } from "../../shared/utils";
 
 export function setUpBehavior(): void {
   context("SetUp", function () {
-    it("should Revert setRewardPool Address Not Admin", async function () {
+    // let etaSetReward = 0;
+
+    // it("should Success addQueue setReward Address", async function () {
+    //   const variables = this.contracts.variables;
+    //   const rewardPool = this.contracts.rewardPool;
+    //   const timelock = this.contracts.timelock;
+    //   const blockNumber = await ethers.provider.getBlockNumber()
+    //   const blockInfo = await ethers.provider.getBlock(blockNumber)
+    //   const eta = blockInfo.timestamp + 49 * 60 * 60
+    //   etaSetReward = eta;
+
+    //   const data = abiEncode(['address'],[rewardPool.address] );
+    //   const txHash = keccak256(abiEncode( ['address', 'uint', 'string', 'bytes', 'uint'], [variables.address, 0, "setReward(address)", data, etaSetReward] ))
+
+    //   await timelock.queueTransaction(
+    //     variables.address,
+    //     0,
+    //     "setReward(address)",
+    //     data,
+    //     etaSetReward
+    //   )
+
+    //   await expect(await timelock.queuedTransactions(txHash)).to.be.eq(true)
+    // });
+
+    // it("should Revert executeTx setReward", async function () {
+    //   const variables = this.contracts.variables;
+    //   const rewardPool = this.contracts.rewardPool;
+    //   const timelock = this.contracts.timelock;
+    //   const data = abiEncode(['address'],[rewardPool.address] );
+
+    //   await expect(timelock.executeTransaction(
+    //     variables.address,
+    //     0,
+    //     "setReward(address)",
+    //     data,
+    //     etaSetReward
+    //   )).to.be.reverted
+    // });
+
+    // it("should Success executeTx setReward", async function () {
+    //   const variables = this.contracts.variables;
+    //   const rewardPool = this.contracts.rewardPool;
+    //   const timelock = this.contracts.timelock;
+    //   const data = abiEncode(['address'],[rewardPool.address] );
+
+    //   await network.provider.send("evm_increaseTime", [49*60*60]);
+    //   await network.provider.send("evm_mine")
+
+    //   // await expect().to.be.reverted
+    //   timelock.executeTransaction(
+    //     variables.address,
+    //     0,
+    //     "setReward(address)",
+    //     data,
+    //     etaSetReward
+    //   )
+
+    //   await expect( await variables.reward() ).to.be.eq(rewardPool.address)
+    // });
+
+    let etaSetSuccessFee = 0;
+
+    it("should Success addQueue setSuccessFee", async function () {
       const variables = this.contracts.variables;
-      const rewardPool = this.contracts.rewardPool;
-      const account1 = this.signers.account1;
+
+      const timelock = this.contracts.timelock;
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const blockInfo = await ethers.provider.getBlock(blockNumber);
+      const eta = blockInfo.timestamp + 49 * 60 * 60;
+      etaSetSuccessFee = eta;
+
+      const data = abiEncode(["uint256"], [10]);
+      const txHash = keccak256(
+        abiEncode(
+          ["address", "uint", "string", "bytes", "uint"],
+          [
+            variables.address,
+            0,
+            "setSuccessFee(uint256)",
+            data,
+            etaSetSuccessFee,
+          ]
+        )
+      );
+
+      await timelock.queueTransaction(
+        variables.address,
+        0,
+        "setSuccessFee(uint256)",
+        data,
+        etaSetSuccessFee
+      );
+
+      await expect(await timelock.queuedTransactions(txHash)).to.be.eq(true);
+    });
+
+    it("should Revert executeTx setSuccessFee", async function () {
+      const variables = this.contracts.variables;
+
+      const timelock = this.contracts.timelock;
+      const data = abiEncode(["uint256"], [10]);
+
       await expect(
-        variables.connect(account1).setReward(rewardPool.address)
+        timelock.executeTransaction(
+          variables.address,
+          0,
+          "setSuccessFee(uint256)",
+          data,
+          etaSetSuccessFee
+        )
       ).to.be.reverted;
     });
 
-    it("should Revert setRewardPool Address Not Contract", async function () {
+    it("should Success executeTx setSuccessFee", async function () {
       const variables = this.contracts.variables;
-      const owner = this.signers.owner;
-      const account1 = this.signers.account1;
-      await expect(variables.connect(owner).setReward(account1)).to.be.reverted;
+      const timelock = this.contracts.timelock;
+
+      const data = abiEncode(["uint256"], [10]);
+      await network.provider.send("evm_increaseTime", [49 * 60 * 60]);
+      await network.provider.send("evm_mine");
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const blockInfo = await ethers.provider.getBlock(blockNumber);
+
+      timelock.executeTransaction(
+        variables.address,
+        0,
+        "setSuccessFee(uint256)",
+        data,
+        etaSetSuccessFee
+      );
+
+      await expect(await variables.successFee()).to.be.eq(10);
     });
 
-    it("should Success setRewardPool Address", async function () {
+    let etaSetServiceFee = 0;
+
+    it("should Success addQueue setServiceFee", async function () {
       const variables = this.contracts.variables;
-      const rewardPool = this.contracts.rewardPool;
-      const owner = this.signers.owner;
-      await variables.connect(owner).setReward(rewardPool.address);
-      await expect(await variables.reward()).to.be.eq(rewardPool.address);
+
+      const timelock = this.contracts.timelock;
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const blockInfo = await ethers.provider.getBlock(blockNumber);
+      const eta = blockInfo.timestamp + 49 * 60 * 60;
+      etaSetServiceFee = eta;
+
+      const data = abiEncode(["uint256"], [1]);
+      const txHash = keccak256(
+        abiEncode(
+          ["address", "uint", "string", "bytes", "uint"],
+          [
+            variables.address,
+            0,
+            "setServiceFee(uint256)",
+            data,
+            etaSetServiceFee,
+          ]
+        )
+      );
+
+      await timelock.queueTransaction(
+        variables.address,
+        0,
+        "setServiceFee(uint256)",
+        data,
+        etaSetServiceFee
+      );
+
+      await expect(await timelock.queuedTransactions(txHash)).to.be.eq(true);
     });
 
-    it("should Revert setTreasury Address Not Admin", async function () {
+    it("should Revert executeTx setServiceFee", async function () {
       const variables = this.contracts.variables;
-      // const treasury = this.contracts.treasury;
-      const treasury = this.contracts.opTreasury;
-      const account1 = this.signers.account1;
+
+      const timelock = this.contracts.timelock;
+      const data = abiEncode(["uint256"], [1]);
+
       await expect(
-        variables.connect(account1).setTreasury(treasury.address)
+        timelock.executeTransaction(
+          variables.address,
+          0,
+          "setServiceFee(uint256)",
+          data,
+          etaSetServiceFee
+        )
       ).to.be.reverted;
     });
 
-    it("should Revert setTreasury Address Not Contract", async function () {
+    it("should Success executeTx setServiceFee", async function () {
       const variables = this.contracts.variables;
-      const owner = this.signers.owner;
-      const account1 = this.signers.account1;
+      const timelock = this.contracts.timelock;
+
+      const data = abiEncode(["uint256"], [1]);
+      await network.provider.send("evm_increaseTime", [49 * 60 * 60]);
+      await network.provider.send("evm_mine");
+
+      timelock.executeTransaction(
+        variables.address,
+        0,
+        "setServiceFee(uint256)",
+        data,
+        etaSetServiceFee
+      );
+
+      await expect(await variables.serviceFee()).to.be.eq(1);
+    });
+
+    let etaSetFeeMultiplier = 0;
+
+    it("should Success addQueue setFeeMultiplier", async function () {
+      const variables = this.contracts.variables;
+
+      const timelock = this.contracts.timelock;
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const blockInfo = await ethers.provider.getBlock(blockNumber);
+      const eta = blockInfo.timestamp + 49 * 60 * 60;
+      etaSetFeeMultiplier = eta;
+
+      const data = abiEncode(["uint256"], [150]);
+      const txHash = keccak256(
+        abiEncode(
+          ["address", "uint", "string", "bytes", "uint"],
+          [
+            variables.address,
+            0,
+            "setFeeMultiplier(uint256)",
+            data,
+            etaSetFeeMultiplier,
+          ]
+        )
+      );
+
+      await timelock.queueTransaction(
+        variables.address,
+        0,
+        "setFeeMultiplier(uint256)",
+        data,
+        etaSetFeeMultiplier
+      );
+
+      await expect(await timelock.queuedTransactions(txHash)).to.be.eq(true);
+    });
+
+    it("should Revert executeTx setFeeMultiplier", async function () {
+      const variables = this.contracts.variables;
+
+      const timelock = this.contracts.timelock;
+      const data = abiEncode(["uint256"], [150]);
+
       await expect(
-        variables.connect(owner).setTreasury(account1)
+        timelock.executeTransaction(
+          variables.address,
+          0,
+          "setFeeMultiplier(uint256)",
+          data,
+          etaSetFeeMultiplier
+        )
       ).to.be.reverted;
     });
 
-    it("should Success setTreasury Address", async function () {
+    it("should Success executeTx setFeeMultiplier", async function () {
       const variables = this.contracts.variables;
-      // const treasury = this.contracts.treasury;
-      const treasury = this.contracts.opTreasury;
-      const owner = this.signers.owner;
-      await variables.connect(owner).setTreasury(treasury.address);
+      const timelock = this.contracts.timelock;
+
+      const data = abiEncode(["uint256"], [150]);
+      await network.provider.send("evm_increaseTime", [49 * 60 * 60]);
+      await network.provider.send("evm_mine");
+
+      timelock.executeTransaction(
+        variables.address,
+        0,
+        "setFeeMultiplier(uint256)",
+        data,
+        etaSetFeeMultiplier
+      );
+
+      await expect(await variables.feeMultiplier()).to.be.eq(150);
+    });
+
+    let etaSetTreasury = 0;
+
+    it("should Success addQueue setTreasury", async function () {
+      const variables = this.contracts.variables;
+      const treasury = this.contracts.treasury;
+
+      const timelock = this.contracts.timelock;
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const blockInfo = await ethers.provider.getBlock(blockNumber);
+      const eta = blockInfo.timestamp + 49 * 60 * 60;
+      etaSetTreasury = eta;
+
+      const data = abiEncode(["address"], [treasury.address]);
+      const txHash = keccak256(
+        abiEncode(
+          ["address", "uint", "string", "bytes", "uint"],
+          [variables.address, 0, "setTreasury(address)", data, etaSetTreasury]
+        )
+      );
+
+      await timelock.queueTransaction(
+        variables.address,
+        0,
+        "setTreasury(address)",
+        data,
+        etaSetTreasury
+      );
+
+      await expect(await timelock.queuedTransactions(txHash)).to.be.eq(true);
+    });
+
+    it("should Revert executeTx setTreasury", async function () {
+      const variables = this.contracts.variables;
+      const treasury = this.contracts.treasury;
+
+      const timelock = this.contracts.timelock;
+      const data = abiEncode(["address"], [treasury.address]);
+
+      await expect(
+        timelock.executeTransaction(
+          variables.address,
+          0,
+          "setTreasury(address)",
+          data,
+          etaSetTreasury
+        )
+      ).to.be.reverted;
+    });
+
+    it("should Success executeTx setTreasury", async function () {
+      const variables = this.contracts.variables;
+      const timelock = this.contracts.timelock;
+      const treasury = this.contracts.treasury;
+
+      const data = abiEncode(["address"], [treasury.address]);
+      await network.provider.send("evm_increaseTime", [49 * 60 * 60]);
+      await network.provider.send("evm_mine");
+
+      timelock.executeTransaction(
+        variables.address,
+        0,
+        "setTreasury(address)",
+        data,
+        etaSetTreasury
+      );
+
       await expect(await variables.treasury()).to.be.eq(treasury.address);
-    });
-
-    it("should Revert setSuccessFee Address Not Gov and Admin", async function () {
-      const variables = this.contracts.variables;
-      const account1 = this.signers.account1;
-      await expect(variables.connect(account1).setSuccessFee(20)).to.be.reverted;
-    });
-
-    it("should Revert setSuccessFee Address Admin", async function () {
-      const variables = this.contracts.variables;
-      const owner = this.signers.owner;
-      await expect(variables.connect(owner).setSuccessFee(20)).to.be.reverted;
-    });
-
-    it("should Success setSuccessFee", async function () {
-      const variables = this.contracts.variables;
-      const gov = this.signers.gov;
-      const fee = 20;
-      await variables.connect(gov).setSuccessFee(fee);
-      await expect(await variables.successFee()).to.be.eq(fee);
-    });
-
-    it("should Revert setSuccessFee Overflow Valeus", async function () {
-      const variables = this.contracts.variables;
-      const gov = this.signers.gov;
-      const fee = 21;
-      await expect(variables.connect(gov).setSuccessFee(fee)).to.be.reverted;
-    });
-
-    it("should Revert setServiceFee Address Not Gov and Admin", async function () {
-      const variables = this.contracts.variables;
-      const account1 = this.signers.account1;
-      await expect(variables.connect(account1).setServiceFee(10)).to.be.reverted;
-    });
-
-    it("should Revert setServiceFee Address Admin", async function () {
-      const variables = this.contracts.variables;
-      const owner = this.signers.owner;
-      const fee = 1;
-      await expect(variables.connect(owner).setServiceFee(fee)).to.be.reverted;
-    });
-
-    it("should Success setServiceFee", async function () {
-      const variables = this.contracts.variables;
-      const gov = this.signers.gov;
-      const fee = 1;
-      await variables.connect(gov).setServiceFee(fee);
-      await expect(await variables.serviceFee()).to.be.eq(fee);
-    });
-
-    it("should Revert setServiceFee Overflow Valeus", async function () {
-      const variables = this.contracts.variables;
-      const gov = this.signers.gov;
-      await expect(variables.connect(gov).setServiceFee(10)).to.be.reverted;
-    });
-
-    it("should Revert setFeeMultiplier Address Not Gov and Admin", async function () {
-      const variables = this.contracts.variables;
-      const account1 = this.signers.account1;
-      await expect(
-        variables.connect(account1).setFeeMultiplier(100)
-      ).to.be.reverted;
-    });
-
-    it("should Revert setFeeMultiplier Address Admin", async function () {
-      const variables = this.contracts.variables;
-      const owner = this.signers.owner;
-      await expect(variables.connect(owner).setFeeMultiplier(100)).to.be.reverted;
-    });
-
-    it("should Success setFeeMultiplier", async function () {
-      const variables = this.contracts.variables;
-      const gov = this.signers.gov;
-      const fee = 200;
-      await variables.connect(gov).setFeeMultiplier(fee);
-      await expect(await variables.feeMultiplier()).to.be.eq(fee);
-    });
-
-    it("should Revert setFeeMultiplier Overflow Valeus", async function () {
-      const variables = this.contracts.variables;
-      const gov = this.signers.gov;
-      await expect(variables.connect(gov).setFeeMultiplier(300)).to.be.reverted;
     });
   });
 }

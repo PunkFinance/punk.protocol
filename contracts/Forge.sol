@@ -24,6 +24,7 @@ contract Forge is
 
     uint256 constant SECONDS_DAY = 1 days;
     uint256 constant SECONDS_YEAR = 31556952;
+
     enum Status {
         NOT_YET_WITHDRAWN_OR_WITHDRAWABLE,
         ALREADY_WITHDRAWN,
@@ -40,6 +41,7 @@ contract Forge is
      * @param variables_ deployed Variables's address
      * @param name_ Forge's name
      * @param symbol_ Forge's symbol
+     * @param model_ Model's address
      * @param token_ ERC20 Token's address
      * @param decimals_ ERC20 (tokens_)'s decimals
      */
@@ -48,6 +50,7 @@ contract Forge is
         address variables_,
         string memory name_,
         string memory symbol_,
+        address model_,
         address token_,
         uint8 decimals_
     ) public initializer {
@@ -58,54 +61,38 @@ contract Forge is
         __symbol = symbol_;
         __decimals = decimals_;
 
+        _model = model_;
         _token = token_;
         _tokenUnit = 10**decimals_;
 
         _count = 0;
 
-        emit Initialize( storage_, variables_, token_, name_, symbol_ );
+        emit Initialize(storage_, variables_, model_, token_, name_, symbol_);
     }
 
-
-    function requestUpgradeModel(address model_)
+    function upgradeModel(address model_)
         public
-        OnlyAdminOrGovernance
+        override
+        OnlyAdmin
         returns (bool)
     {
         require(model_ != address(0), "FORGE : Model address is zero");
-        require(Address.isContract(model_),"FORGE : Model address must be the contract address.");
-        require(ModelInterface(model_).token() == _token,"FORGE : Model has Token address is not equals");
-        require(ModelInterface(model_).forge() == address(this),"FORGE : Model has Forge address is not equals this address");
+        require(
+            Address.isContract(model_),
+            "FORGE : Model address must be the contract address."
+        );
+        require(
+            ModelInterface(model_).token() == _token,
+            "FORGE : Model has Token address is not equals"
+        );
+        require(
+            ModelInterface(model_).forge() == address(this),
+            "FORGE : Model has Forge address is not equals this address"
+        );
         require(_model != model_, "FORGE : Current Model");
 
-        if( modelAddress() == address(0) ){
-            _model = model_;
-            emit SetModel(address(0), model_);
-        }else{
-            _nextUpgradeModel = model_;
-            _nextUpgradeModelTimestamp = block.timestamp.add( _delayTime );
-            emit RequestUpgradeModel( _model, _nextUpgradeModel, _nextUpgradeModelTimestamp );
-        }
-        
-        return false;
-    }
-
-    function upgradeModelAccept() external override OnlyAdminOrGovernance returns(bool){
-        require(_nextUpgradeModel != address(0x0), "");
-        require(_nextUpgradeModelTimestamp <= block.timestamp, "");
-        require(_nextUpgradeModelTimestamp != 0, "");
-        
-        if (_model != address(0)) {
-            ModelInterface(_model).withdrawAllToForge();
-            IERC20(_token).safeTransfer( _nextUpgradeModel, IERC20(_token).balanceOf(address(this)) );
-            ModelInterface(_nextUpgradeModel).invest();
-        }
-
-        emit SetModel(_model, _nextUpgradeModel);
-        _model = _nextUpgradeModel;
-        
-        _nextUpgradeModel = address(0x0);
-        _nextUpgradeModelTimestamp = 0;
+        emit UpgradeModel(_model, model_, block.timestamp);
+        _model = model_;
 
         return false;
     }
@@ -237,7 +224,6 @@ contract Forge is
             emit AddDeposit(msg.sender, index, amount);
 
             _mint(msg.sender, mint);
-            _autoStake(mint);
         }
 
         return true;
@@ -285,12 +271,12 @@ contract Forge is
             "FORGE : Terminated Saver"
         );
         require(withdrawablePlp >= hope, "FORGE : Insufficient Amount");
+        require(balanceOf(msg.sender) >= hope, "FORGE : Insufficient Amount");
 
         // TODO Confirm withdrawal of currency after use of balance.
         /* for Underlying ERC20 token */
 
         {
-            _autoUnstake(hope);
             (
                 uint256 amountOfWithdraw,
                 uint256 amountOfServiceFee
@@ -338,7 +324,7 @@ contract Forge is
         uint256 hope = s.mint.sub(s.released);
 
         {
-            _autoUnstake(hope);
+            require(balanceOf(msg.sender) >= hope, "FORGE : Insufficient Amount");
             (
                 uint256 amountOfWithdraw,
                 uint256 amountOfServiceFee
@@ -510,36 +496,6 @@ contract Forge is
             serviceFee = amount.mul(sf).div(100);
         } else {
             serviceFee = amount.mul(period).mul(sf).div(SECONDS_YEAR).div(100);
-        }
-    }
-
-    function _autoStake(uint256 hope) private {
-        if (_variables.reward() != address(0)) {
-            approve(_variables.reward(), balanceOf(msg.sender));
-            PunkRewardPoolInterface(_variables.reward()).staking(
-                address(this),
-                hope,
-                msg.sender
-            );
-        }
-    }
-
-    function _autoUnstake(uint256 hope) private {
-        if (_variables.reward() != address(0)) {
-            uint256 staked = PunkRewardPoolInterface(_variables.reward()).staked(address(this), msg.sender);
-            if (staked >= hope) {
-                PunkRewardPoolInterface(_variables.reward()).unstaking(
-                    address(this),
-                    hope,
-                    msg.sender
-                );
-            } else {
-                PunkRewardPoolInterface(_variables.reward()).unstaking(
-                    address(this),
-                    staked,
-                    msg.sender
-                );
-            }
         }
     }
 

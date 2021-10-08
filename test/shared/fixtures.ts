@@ -2,6 +2,7 @@ import { Contract, Wallet } from "ethers";
 import { artifacts, ethers } from "hardhat"
 import { Tokens, UniswapAddresses } from "./mockInfo";
 
+let timelock:Contract 
 let storage:Contract 
 let punkMock:Contract 
 
@@ -11,6 +12,14 @@ export async function unitPunkMockFixtures([,,,,,owner] : Wallet[]): Promise<Con
     await punk.deployed();
     punkMock = punk;
     return punk;
+}
+
+export async function unitFixtureTimelock([,,,,,owner] : Wallet[]): Promise<Contract> {
+    const Timelock = await ethers.getContractFactory("Timelock");
+    const _timelock = await Timelock.connect(owner).deploy( owner.address, 172800)
+    await _timelock.deployed()
+    timelock = _timelock
+    return timelock
 }
 
 export async function unitFixtureForge(): Promise<Contract> {
@@ -49,6 +58,13 @@ export async function unitFixtureCompoundModel(): Promise<Contract> {
     return compoundModel
 }
 
+export async function unitFixtureCompoundModelToReplaced(): Promise<Contract> {
+    const CompoundModel = await ethers.getContractFactory("CompoundModel")
+    const compoundModel = await CompoundModel.deploy()
+    await compoundModel.deployed()
+    return compoundModel
+}
+
 export async function unitFixtureUniswapV2(): Promise<Contract> {
     const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
     const uniswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, UniswapAddresses.UniswapV2Router02);
@@ -69,7 +85,7 @@ export async function unitFixtureRecoveryFund([,,,,,owner] : Wallet[]): Promise<
 
 export async function unitFixtureOwnableStorage([,,,,,owner] : Wallet[]): Promise<Contract> {
     const OwnableStorage = await ethers.getContractFactory("OwnableStorage")
-    const ownableStorage = await OwnableStorage.connect(owner).deploy()
+    const ownableStorage = await OwnableStorage.connect(owner).deploy(timelock.address)
     await ownableStorage.deployed()
     storage = ownableStorage;
     return ownableStorage
@@ -94,13 +110,6 @@ export async function unitFixtureGrinder(): Promise<Contract> {
     const grinder = await Grinder.deploy(punkMock.address)
     await grinder.deployed()
     return grinder;
-}
-
-export async function unitFixturePunkRewardPool(): Promise<Contract> {
-    const PunkRewardPool = await ethers.getContractFactory("PunkRewardPool")
-    const punkRewardPool = await PunkRewardPool.deploy()
-    await punkRewardPool.deployed()
-    return punkRewardPool;
 }
 
 export async function unitFixtureFairLaunch(): Promise<Contract> {
