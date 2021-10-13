@@ -48,6 +48,22 @@ contract Treasury is Ownable {
         emit AddAsset(token);
     }
 
+    function transferToken(address token, address to, uint256 amount)
+        public
+        OnlyAdmin
+    {
+        require(IERC20(token).balanceOf(address(this)) >= amount, "TREASURY : Balance is Insufficient");
+        IERC20(token).safeTransfer(to, amount);
+    }
+
+    function transferEth(address to, uint256 amount)
+        public
+        OnlyAdmin
+    {
+        require(address(this).balance >= amount, "TREASURY : Eth Balance is Insufficient");
+        require(payable(to).send(amount));
+    }
+
     function buyBack(address[] memory tokens, uint256[] memory amountOutMins)
         public
         OnlyAdmin

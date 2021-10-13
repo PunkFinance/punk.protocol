@@ -32,8 +32,6 @@ export function setUpBehavior(): void {
             await recoveryFundMock.connect(accountDai).refund(balance);
             const refunded = (await recoveryFundMock.refunded()).toString();
             
-            console.log("recoveryFundMock.address", recoveryFundMock.address)
-
             await expect(await recoveryFundMock.totalSupply()).eq( BigNumber.from(beforeTotalSupply).sub(refunded) )
 
             await expect( await recoveryFundMock.balanceOf("0xe1cd21e5d6f4323E91dA943B0A4F1732acC7a138")).eq( BigNumber.from("1213998517300000000000000").sub(BigNumber.from("1213998517300000000000000").mul(balance).div(beforeTotalSupply)));
