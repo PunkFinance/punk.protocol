@@ -15,8 +15,6 @@ use(solidity);
 baseContext("Unit Tests", async function () {
   beforeBehavior();
 
-  // unitTestRecoveryFund();
-
   unitTestOwnableStorage();
 
   unitTestVariables();
@@ -26,5 +24,7 @@ baseContext("Unit Tests", async function () {
   unitTestCompoundModel();
 
   unitTestForge();
+
+  unitTestRecoveryFund();
   
 });

@@ -28,13 +28,12 @@ export function setUpBehavior(): void {
             let balance = (await daiContract.balanceOf(accountDai.address)).toString()
 
             const beforeTotalSupply = (await recoveryFundMock.totalSupply()).toString()
-            const minRefundAmount = (await recoveryFundMock.minRefundAmount()).toString()
-
-            balance = BigNumber.from(balance).sub(BigNumber.from(balance).mod(minRefundAmount))
             await daiContract.approve( recoveryFundMock.address, balance )
             await recoveryFundMock.connect(accountDai).refund(balance);
             const refunded = (await recoveryFundMock.refunded()).toString();
             
+            console.log("recoveryFundMock.address", recoveryFundMock.address)
+
             await expect(await recoveryFundMock.totalSupply()).eq( BigNumber.from(beforeTotalSupply).sub(refunded) )
 
             await expect( await recoveryFundMock.balanceOf("0xe1cd21e5d6f4323E91dA943B0A4F1732acC7a138")).eq( BigNumber.from("1213998517300000000000000").sub(BigNumber.from("1213998517300000000000000").mul(balance).div(beforeTotalSupply)));
@@ -55,7 +54,7 @@ export function setUpBehavior(): void {
             await expect( await recoveryFundMock.balanceOf("0xe9017c8De5040968D9752A18d805cD2A983E558c")).eq( BigNumber.from("32003782980000000000000").sub(BigNumber.from("32003782980000000000000").mul(balance).div(beforeTotalSupply)));
             await expect( await recoveryFundMock.balanceOf("0x55d72CbcbA1Ab5C784bC52641D16c613E3b9BAD4")).eq( BigNumber.from("31755408880000000000000").sub(BigNumber.from("31755408880000000000000").mul(balance).div(beforeTotalSupply)));
             await expect( await recoveryFundMock.balanceOf("0xf76CF36f638c7bCD83f4756beDb86243D98982F9")).eq( BigNumber.from("29253624400000000000000").sub(BigNumber.from("29253624400000000000000").mul(balance).div(beforeTotalSupply)));
-            await expect( await recoveryFundMock.balanceOf("0x29227FB595D091bcA244E76201c0dd50641D96C8")).eq( BigNumber.from("27239560830000002000000").sub(BigNumber.from("27239560830000002000000").mul(balance).div(beforeTotalSupply)));
+            await expect( await recoveryFundMock.balanceOf("0x2881Be539cacB7671D32D1f2cdEb50F53F9F19b5")).eq( BigNumber.from("27239560830000002000000").sub(BigNumber.from("27239560830000002000000").mul(balance).div(beforeTotalSupply)));
             await expect( await recoveryFundMock.balanceOf("0x2572a193DA3DEf3BAeA04cB18e06A52186aC1a98")).eq( BigNumber.from("26954824385000000000000").sub(BigNumber.from("26954824385000000000000").mul(balance).div(beforeTotalSupply)));
             await expect( await recoveryFundMock.balanceOf("0x81a7E267Fd8339a01beb175f5A3d644FcF0B48Dc")).eq( BigNumber.from("24234548190999998000000").sub(BigNumber.from("24234548190999998000000").mul(balance).div(beforeTotalSupply)));
             await expect( await recoveryFundMock.balanceOf("0x67D33CF1C7c699078f86D517A5a1cd1444A1E85C")).eq( BigNumber.from("23536011086000000000000").sub(BigNumber.from("23536011086000000000000").mul(balance).div(beforeTotalSupply)));

@@ -51,7 +51,7 @@ export function initialBehavior(): void {
             await expect( await recoveryFundMock.balanceOf("0xe9017c8De5040968D9752A18d805cD2A983E558c")).eq( BigNumber.from("32003782980000000000000"));
             await expect( await recoveryFundMock.balanceOf("0x55d72CbcbA1Ab5C784bC52641D16c613E3b9BAD4")).eq( BigNumber.from("31755408880000000000000"));
             await expect( await recoveryFundMock.balanceOf("0xf76CF36f638c7bCD83f4756beDb86243D98982F9")).eq( BigNumber.from("29253624400000000000000"));
-            await expect( await recoveryFundMock.balanceOf("0x29227FB595D091bcA244E76201c0dd50641D96C8")).eq( BigNumber.from("27239560830000002000000"));
+            await expect( await recoveryFundMock.balanceOf("0x2881Be539cacB7671D32D1f2cdEb50F53F9F19b5")).eq( BigNumber.from("27239560830000002000000"));
             await expect( await recoveryFundMock.balanceOf("0x2572a193DA3DEf3BAeA04cB18e06A52186aC1a98")).eq( BigNumber.from("26954824385000000000000"));
             await expect( await recoveryFundMock.balanceOf("0x81a7E267Fd8339a01beb175f5A3d644FcF0B48Dc")).eq( BigNumber.from("24234548190999998000000"));
             await expect( await recoveryFundMock.balanceOf("0x67D33CF1C7c699078f86D517A5a1cd1444A1E85C")).eq( BigNumber.from("23536011086000000000000"));
