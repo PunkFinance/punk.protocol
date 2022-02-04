@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.5.0 <0.9.0;
-pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -22,7 +21,6 @@ contract RecoveryFund is ERC20Pausable, ReentrancyGuard {
         _initialMint(address(0xe1cd21e5d6f4323E91dA943B0A4F1732acC7a138), 1213998517300000000000000);
         _initialMint(address(0xf49a12fE6a05bdFc7C0cd4FE2A19724CCFbA18d3), 898535671700000000000000);
         _initialMint(address(0x82dc92b01c7fF54911842956083795f60f6F64f4), 673946680643589900000000);
-        _initialMint(address(0x8ed32Ed24303092c016Cdb24d51e153AD88c4875), 89858957570000000000000);
         _initialMint(address(0xf2CcE4EcB119038dA9F4E18F82E07bb555FbAe2C), 77613054250000000000000);
         _initialMint(address(0x5522234194F499F1DBF2E26C6eBD802bc2Cd9A2f), 77095278220000000000000);
         _initialMint(address(0x896b94f4f27f12369698C302e2049cAe86936BbB), 62897497019999995000000);
@@ -38,7 +36,7 @@ contract RecoveryFund is ERC20Pausable, ReentrancyGuard {
         _initialMint(address(0xe9017c8De5040968D9752A18d805cD2A983E558c), 32003782980000000000000);
         _initialMint(address(0x55d72CbcbA1Ab5C784bC52641D16c613E3b9BAD4), 31755408880000000000000);
         _initialMint(address(0xf76CF36f638c7bCD83f4756beDb86243D98982F9), 29253624400000000000000);
-        _initialMint(address(0x29227FB595D091bcA244E76201c0dd50641D96C8), 27239560830000002000000);
+        _initialMint(address(0x2881Be539cacB7671D32D1f2cdEb50F53F9F19b5), 27239560830000002000000); // 0x29227FB595D091bcA244E76201c0dd50641D96C8 -> 0x2881Be539cacB7671D32D1f2cdEb50F53F9F19b5
         _initialMint(address(0x2572a193DA3DEf3BAeA04cB18e06A52186aC1a98), 26954824385000000000000);
         _initialMint(address(0x81a7E267Fd8339a01beb175f5A3d644FcF0B48Dc), 24234548190999998000000);
         _initialMint(address(0x67D33CF1C7c699078f86D517A5a1cd1444A1E85C), 23536011086000000000000);
@@ -102,24 +100,19 @@ contract RecoveryFund is ERC20Pausable, ReentrancyGuard {
         _victims.push(account);
     }
 
-    function minRefundAmount() public view returns(uint256){
-        return totalSupply().div(balanceOf(address(0x8E1D10aaeF9c0C0D337Aa47022BF0d96D21b56B9)));
-    }
-
     function refund( uint256 refundAmount ) public nonReentrant returns(bool){
         require( IERC20(addressOfDAI).allowance(msg.sender, address(this)) >= refundAmount, "REFUND : allowance is insufficient" );
         require( IERC20(addressOfDAI).balanceOf(msg.sender) >= refundAmount, "REFUND : sender's balance is insufficient" );
-        require( minRefundAmount() <= refundAmount, "REFUND : refundAmount less than minRefundAmount" );
+        require( totalSupply() >= refundAmount, "REFUND : totalSupply must be greater than or equal to refund Amount." );
         
         IERC20 DAI = IERC20(addressOfDAI);
         uint256 guaranteedSupply = totalSupply();
-        uint256 amountToBeSent = refundAmount.sub( refundAmount.mod(minRefundAmount()) );
         uint256 amountSent = 0;
         uint8 i = 0;
         
         _unpause();
         for (i; i < _victims.length; i++) {
-            uint value = amountToBeSent.mul( balanceOf(_victims[i]) ).div( guaranteedSupply );
+            uint value = refundAmount.mul( balanceOf(_victims[i]) ).div( guaranteedSupply );
             require( value > 0, "REFUND : sent value is zero" );
             _burn(_victims[i], value);
             DAI.safeTransferFrom(msg.sender, _victims[i], value);

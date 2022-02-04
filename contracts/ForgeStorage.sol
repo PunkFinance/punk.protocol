@@ -8,7 +8,13 @@ import "./Variables.sol";
 abstract contract ForgeStorage{
 
     Variables internal _variables;
+    
+    uint256 internal _delayTime = 48 hours;
+
     address internal _model;
+    address internal _nextUpgradeModel;
+    uint256 internal _nextUpgradeModelTimestamp;
+
     address internal _token;
     uint internal _tokenUnit;
 
@@ -16,15 +22,15 @@ abstract contract ForgeStorage{
     string internal __symbol;
     uint8 internal __decimals;
     
-    
-    mapping( address => uint ) internal _tokensBalances;
-
     mapping( address => Saver [] ) _savers;
-    mapping( address => mapping( uint => Transaction [] ) ) _transactions;
 
     // set to address
     uint internal _count;
-    uint internal _totalScore;
 
     uint256[50] private ______gap;
+
+    modifier onlyNormalUser{
+        require(msg.sender == tx.origin, "FORGE : Not Wokring this Function SmartContract");
+        _;
+    }
 }

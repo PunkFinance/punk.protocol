@@ -17,14 +17,4 @@ contract Ownable is Initializable{
         _;
     }
 
-    modifier OnlyGovernance(){
-        require( _storage.isGovernance( msg.sender ), "OWNABLE : Only Governance" );
-        _;
-    }
-
-    modifier OnlyAdminOrGovernance(){
-        require( _storage.isAdmin(msg.sender) || _storage.isGovernance( msg.sender ), "OWNABLE : Only Admin Or Governance" );
-        _;
-    }
-
 }

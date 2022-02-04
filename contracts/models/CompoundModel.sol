@@ -17,7 +17,7 @@ contract CompoundModel is ModelInterface, ModelStorage, Initializable{
     using SafeMath for uint;
 
     event Swap( uint compAmount, uint underlying );
-    event Initialize();
+    event Initialize( address forge, address model );
 
     address creator;
 
@@ -43,18 +43,18 @@ contract CompoundModel is ModelInterface, ModelStorage, Initializable{
         address comptroller_,
         address uRouterV2_ ) public initializer onlyCreator
         {
-            addToken( token_ );
+            setToken( token_ );
             setForge( forge_ );
             _cToken         = cToken_;
             _comp           = comp_;
             _comptroller    = comptroller_;
             _uRouterV2      = uRouterV2_;
 
-            emit Initialize();
+            emit Initialize( forge_, address(this) );
     }
 
     function underlyingBalanceInModel() public override view returns ( uint256 ){
-        return IERC20( token( 0 ) ).balanceOf( address( this ) );
+        return IERC20( token() ).balanceOf( address( this ) );
     }
 
     function underlyingBalanceWithInvestment() public override view returns ( uint256 ){
@@ -64,7 +64,7 @@ contract CompoundModel is ModelInterface, ModelStorage, Initializable{
 
     function invest() public override {
         // Hard Work Now! For Punkers by 0xViktor
-        IERC20( token( 0 ) ).safeApprove( _cToken, underlyingBalanceInModel() );
+        IERC20( token() ).safeApprove( _cToken, underlyingBalanceInModel() );
         emit Invest( underlyingBalanceInModel(), block.timestamp );
         CTokenInterface( _cToken ).mint( underlyingBalanceInModel() );
     }
@@ -86,17 +86,8 @@ contract CompoundModel is ModelInterface, ModelStorage, Initializable{
     }
 
     function withdrawToForge( uint256 amount ) public OnlyForge override{
-        withdrawTo( amount, forge() );
-    }
-
-    function withdrawTo( uint256 amount, address to ) public OnlyForge override{
-        // Hard Work Now! For Punkers by 0xViktor
-        uint oldBalance = IERC20( token(0) ).balanceOf( address( this ) );
         CTokenInterface( _cToken ).redeemUnderlying( amount );
-        uint newBalance = IERC20( token(0) ).balanceOf( address( this ) );
-        require(newBalance.sub( oldBalance ) > 0, "MODEL : REDEEM BALANCE IS ZERO");
-        IERC20( token( 0 ) ).safeTransfer( to, newBalance.sub( oldBalance ) );
-        
+        IERC20( token() ).safeTransfer( forge(), amount );
         emit Withdraw( amount, forge(), block.timestamp);
     }
 
@@ -119,7 +110,7 @@ contract CompoundModel is ModelInterface, ModelStorage, Initializable{
             address[] memory path = new address[](3);
             path[0] = address(_comp);
             path[1] = IUniswapV2Router( _uRouterV2 ).WETH();
-            path[2] = address( token( 0 ) );
+            path[2] = address( token() );
 
             IUniswapV2Router(_uRouterV2).swapExactTokensForTokens(
                 balance,

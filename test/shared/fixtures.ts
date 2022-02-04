@@ -1,8 +1,8 @@
-import { Signer } from "@ethersproject/abstract-signer"
 import { Contract, Wallet } from "ethers";
-import { artifacts, ethers, waffle } from "hardhat"
+import { artifacts, ethers } from "hardhat"
 import { Tokens, UniswapAddresses } from "./mockInfo";
 
+let timelock:Contract 
 let storage:Contract 
 let punkMock:Contract 
 
@@ -14,53 +14,30 @@ export async function unitPunkMockFixtures([,,,,,owner] : Wallet[]): Promise<Con
     return punk;
 }
 
-export async function libraryFixtures(): Promise<Contract> {
-    const CommitmentWeight = await ethers.getContractFactory("CommitmentWeight")
-    const commietmentWeight = await CommitmentWeight.deploy()
-    await commietmentWeight.deployed()
-
-    const Score = await ethers.getContractFactory("Score", {
-        libraries: {
-            CommitmentWeight: commietmentWeight.address
-        }
-    });
-    const score = await Score.deploy()
-    await score.deployed();
-
-    return score
+export async function unitFixtureTimelock([,,,,,owner] : Wallet[]): Promise<Contract> {
+    const Timelock = await ethers.getContractFactory("Timelock");
+    const _timelock = await Timelock.connect(owner).deploy( owner.address, 172800)
+    await _timelock.deployed()
+    timelock = _timelock
+    return timelock
 }
 
 export async function unitFixtureForge(): Promise<Contract> {
-    const score = await libraryFixtures();
-    const Forge = await ethers.getContractFactory("Forge", {
-        libraries: {
-            Score: score.address,
-        }
-    });
+    const Forge = await ethers.getContractFactory("Forge");
     const forge = await Forge.deploy()
     await forge.deployed();
     return forge;
 }
 
 export async function unitFixtureForge2nd(): Promise<Contract> {
-    const score = await libraryFixtures();
-    const Forge = await ethers.getContractFactory("Forge", {
-        libraries: {
-            Score: score.address,
-        }
-    });
+    const Forge = await ethers.getContractFactory("Forge");
     const forge = await Forge.deploy()
     await forge.deployed();
     return forge;
 }
 
 export async function unitFixtureForge3rd(): Promise<Contract> {
-    const score = await libraryFixtures();
-    const Forge = await ethers.getContractFactory("Forge", {
-        libraries: {
-            Score: score.address,
-        }
-    });
+    const Forge = await ethers.getContractFactory("Forge");
     const forge = await Forge.deploy()
     await forge.deployed();
     return forge;
@@ -81,16 +58,17 @@ export async function unitFixtureCompoundModel(): Promise<Contract> {
     return compoundModel
 }
 
+export async function unitFixtureCompoundModelToReplaced(): Promise<Contract> {
+    const CompoundModel = await ethers.getContractFactory("CompoundModel")
+    const compoundModel = await CompoundModel.deploy()
+    await compoundModel.deployed()
+    return compoundModel
+}
+
 export async function unitFixtureUniswapV2(): Promise<Contract> {
     const IUniswapV2Router = await artifacts.readArtifact("IUniswapV2Router");
     const uniswapRouter = await ethers.getContractAt(IUniswapV2Router.abi, UniswapAddresses.UniswapV2Router02);
     return uniswapRouter
-}
-
-export async function unitFixtureUniswapFactoryV2(): Promise<Contract> {
-    const IUniswapV2Factory = await artifacts.readArtifact("IUniswapV2Factory");
-    const uniswapFactory = await ethers.getContractAt(IUniswapV2Factory.abi, UniswapAddresses.UniswapFactoryV2);
-    return uniswapFactory
 }
 
 export async function unitFixtureDaiToken(): Promise<Contract> {
@@ -99,37 +77,18 @@ export async function unitFixtureDaiToken(): Promise<Contract> {
     return daiToken
 }
 
-export async function unitFixtureRecoveryFund(): Promise<Contract> {
-    const RecoveryFundMock = await ethers.getContractFactory("RecoveryFundMock")
-    const recoveryFundMock = await RecoveryFundMock.deploy()
+export async function unitFixtureRecoveryFund([,,,,,owner] : Wallet[]): Promise<Contract> {
+    const RecoveryFundMock = await ethers.getContractFactory("RecoveryFund")
+    const recoveryFundMock = await RecoveryFundMock.connect(owner).deploy()
     return recoveryFundMock
 }
 
 export async function unitFixtureOwnableStorage([,,,,,owner] : Wallet[]): Promise<Contract> {
     const OwnableStorage = await ethers.getContractFactory("OwnableStorage")
-    const ownableStorage = await OwnableStorage.connect(owner).deploy()
+    const ownableStorage = await OwnableStorage.connect(owner).deploy(timelock.address)
     await ownableStorage.deployed()
     storage = ownableStorage;
     return ownableStorage
-}
-
-export async function unitFixtureScoreMock(): Promise<Contract> {
-    const score = await libraryFixtures();
-    const ScoreMock = await ethers.getContractFactory("ScoreMock", {
-        libraries: {
-            Score: score.address,
-        }
-    });
-    const scoreMock = await ScoreMock.deploy()
-
-    return scoreMock
-}
-
-export async function unitFixtureReferral(): Promise<Contract> {
-    const Referral = await ethers.getContractFactory("Referral")
-    const referral = await Referral.deploy()
-    await referral.deployed()
-    return referral;
 }
 
 export async function unitFixtureTreasury(): Promise<Contract> {
@@ -153,16 +112,15 @@ export async function unitFixtureGrinder(): Promise<Contract> {
     return grinder;
 }
 
-export async function unitFixturePunkRewardPool(): Promise<Contract> {
-    const PunkRewardPool = await ethers.getContractFactory("PunkRewardPool")
-    const punkRewardPool = await PunkRewardPool.deploy()
-    await punkRewardPool.deployed()
-    return punkRewardPool;
-}
-
 export async function unitFixtureFairLaunch(): Promise<Contract> {
     const FairLaunch = await ethers.getContractFactory("FairLaunch")
     const fairLaunch = await FairLaunch.deploy()
     await fairLaunch.deployed()
     return fairLaunch;
+}
+
+export async function unitFixtureUniswapFactoryV2(): Promise<Contract> {
+    const IUniswapV2Factory = await artifacts.readArtifact("IUniswapV2FactoryMock");
+    const uniswapFactory = await ethers.getContractAt(IUniswapV2Factory.abi, UniswapAddresses.UniswapFactoryV2);
+    return uniswapFactory
 }
